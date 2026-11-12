@@ -41,7 +41,7 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 .tb-note{flex-basis:100%;font-size:12px;opacity:.75}
 
 /* participant screen (#display): AR view only, driven by the controller window */
-.wheel,.cowl{display:none}
+.cowl{display:none}
 .display .testbar,.display .panel{display:none}
 .phone-mode .app{display:none}
 .work{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr)}
@@ -62,12 +62,22 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 .panel button:focus-visible{outline:3px solid #0b6f8f;outline-offset:2px}
 .panel button:disabled{opacity:.45;cursor:default}
 .panel button[aria-pressed="true"]{background:#1d8a4c;border-color:#1d8a4c;color:#fff}
-.panel #wHazard[aria-pressed="true"]{background:var(--hazard);border-color:var(--hazard)}
 .panel #btnBL[aria-pressed="true"],.panel #btnBR[aria-pressed="true"],.panel #btnPed[aria-pressed="true"],.panel #btnObs[aria-pressed="true"]{background:#b35c00;border-color:#b35c00}
 .panel #wTake.call{background:var(--hazard);border-color:var(--hazard);color:#fff}
 .panel #btnReset{border-style:dashed;font-weight:400}
 .panel kbd{font:inherit;font-size:12px;font-weight:400;padding:1px 6px;border:1px solid currentColor;border-radius:5px;opacity:.75;flex:none}
 .wiz-note{margin:0;font-size:14px;min-height:2.7em}
+.panel .wheel{display:block;position:static;width:min(100%,330px);height:auto;aspect-ratio:1/1;margin:0 auto 10px}
+.pedals{display:grid;grid-template-columns:1.25fr .8fr 1.5fr;gap:8px;align-items:end}
+.panel .pedal{flex-direction:column;justify-content:center;gap:6px;min-height:84px;color:#fff;border-color:#141816;touch-action:none;user-select:none;-webkit-user-select:none;
+  background:#3b3f3d repeating-linear-gradient(0deg,rgba(255,255,255,.09) 0 3px,rgba(255,255,255,0) 3px 11px)}
+.panel .pedal.gas{min-height:112px;border-radius:10px 10px 18px 18px}
+.panel .pedal:hover{background-color:#4a4f4c}
+.panel .pedal[aria-pressed="true"]{background-color:#1d8a4c;border-color:#1d8a4c;transform:translateY(3px)}
+.panel .pedal.brake[aria-pressed="true"]{background-color:var(--hazard);border-color:var(--hazard)}
+.hint{margin:8px 0 0;font-size:13px;color:#4b524e}
+.limit.over b{background:var(--warn);color:#2a0b07}
+.ph-limit.over b{background:var(--warn);color:#2a0b07}
 .log{margin:0;padding:0;list-style:none;font-size:13px;display:flex;flex-direction:column;gap:3px}
 .log li{display:flex;gap:8px}
 .log time{font-variant-numeric:tabular-nums;color:#5a615d;flex:none}
@@ -77,7 +87,7 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 .phone-wrap{position:fixed;inset:0;background:#2a2d2c;display:grid;place-items:center;padding:12px;font-family:var(--font)}
 .phone{container-type:size;height:100%;max-height:920px;aspect-ratio:9/19;max-width:100%;background:#0e1413;color:#fff;border-radius:34px;border:6px solid #000;overflow:hidden}
 .phone.take{background:#7d1611}
-.phone.take.blink{background:var(--hazard)}
+.blink .phone.take{background:var(--hazard)}
 @media (max-width:520px){.phone-wrap{padding:0}.phone{aspect-ratio:auto;width:100%;max-height:none;border-radius:0;border:0}}
 .ph{height:100%;box-sizing:border-box;padding:4cqh 7cqw 2.5cqh;display:flex;flex-direction:column;gap:2cqh}
 .ph-top{display:flex;justify-content:space-between;align-items:center;font-size:2.6cqh;font-weight:700}
@@ -175,7 +185,7 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 .tk span{font-size:15px;line-height:1.25}
 .tk.soft{background:var(--plate);border-color:var(--warn)}
 .tk.soft svg{color:var(--warn)}
-.stage.takeover.blink .shield{border-color:var(--hazard);box-shadow:inset 0 0 0 6px rgba(226,58,48,.8)}
+.blink .stage.takeover .shield{border-color:var(--hazard);box-shadow:inset 0 0 0 6px rgba(226,58,48,.8)}
 
 /* blind-spot warning: orange glow in the rider's peripheral view */
 .blind{position:absolute;top:0;bottom:calc(var(--D)*.3);width:min(24%,170px);pointer-events:none;opacity:0}
@@ -267,7 +277,7 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
           <div class="sig" id="sigL"><svg viewBox="0 0 32 32"><polygon class="lamp" points="3,16 16,4 16,11 29,11 29,21 16,21 16,28"/></svg><span class="sig-label" id="sigLText" hidden></span></div>
           <svg class="arc" viewBox="0 0 14 100" preserveAspectRatio="none"><path d="M12 3Q-7 50 12 97"/></svg>
           <div class="speed">
-            <span class="limit">Limit <b>25</b></span>
+            <span class="limit" id="limit">Limit <b>25</b></span>
             <b id="hudSpeed">15</b><span>mph</span>
           </div>
           <div class="nav">
@@ -288,88 +298,6 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
     <div class="plate wait" id="wait" hidden>Waiting for the controller window. Open this page without "#display" in another window of the same browser.</div>
     <div class="cowl"></div>
 
-    <svg class="wheel" id="wheel" viewBox="0 0 600 600" role="group" aria-label="Steering wheel controls">
-      <!-- turn-signal paddles: levers behind the wheel at 10 and 2 o'clock, blade reaches past the grip -->
-      <g stroke="#474b48" stroke-width="46"><path d="M224.4 240.9L189.7 213.8"/><path d="M375.6 240.9L410.3 213.8"/></g>
-      <g class="ctl paddle" id="padL" role="button" tabindex="0" aria-pressed="false" aria-label="Left turn signal">
-        <path class="face" d="M178.3 260.4L16.6 207.9A298 298 0 0 1 160.2 36.9L239.9 187A128 128 0 0 0 178.3 260.4Z"/>
-        <path class="ring" d="M178.3 260.4L16.6 207.9A298 298 0 0 1 160.2 36.9L239.9 187A128 128 0 0 0 178.3 260.4Z" stroke-linejoin="round"/>
-        <polygon class="ink" points="138,196 170,172 170,187 198,187 198,205 170,205 170,220"/>
-        <text class="ink" x="184" y="154" font-size="18">LEFT</text>
-      </g>
-      <g class="ctl paddle" id="padR" role="button" tabindex="0" aria-pressed="false" aria-label="Right turn signal">
-        <path class="face" d="M421.7 260.4L583.4 207.9A298 298 0 0 0 439.8 36.9L360.1 187A128 128 0 0 1 421.7 260.4Z"/>
-        <path class="ring" d="M421.7 260.4L583.4 207.9A298 298 0 0 0 439.8 36.9L360.1 187A128 128 0 0 1 421.7 260.4Z" stroke-linejoin="round"/>
-        <polygon class="ink" points="462,196 430,172 430,187 402,187 402,205 430,205 430,220"/>
-        <text class="ink" x="416" y="154" font-size="18">RIGHT</text>
-      </g>
-
-      <!-- rim and grips -->
-      <defs>
-        <linearGradient id="gRim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8d918d"/><stop offset="1" stop-color="#525653"/></linearGradient>
-        <linearGradient id="gSpoke" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#939793"/><stop offset="1" stop-color="#666a67"/></linearGradient>
-        <radialGradient id="gGlass" cx=".5" cy=".15" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient>
-      </defs>
-      <circle cx="300" cy="300" r="244" fill="none" stroke="url(#gRim)" stroke-width="52"/>
-      <circle cx="300" cy="300" r="270" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="2"/>
-      <circle cx="300" cy="300" r="218" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="2"/>
-      <circle cx="300" cy="300" r="264" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="3"/>
-      <g fill="none" stroke-linecap="round" id="grips" class="grips">
-        <path d="M70.7 383.5A244 244 0 0 1 113.1 143.2" stroke="var(--grip)" stroke-width="64"/>
-        <path d="M486.9 143.2A244 244 0 0 1 529.3 383.5" stroke="var(--grip)" stroke-width="64"/>
-      </g>
-      <g fill="none" stroke="rgba(0,0,0,.2)" stroke-width="64" stroke-dasharray="3 15" style="pointer-events:none">
-        <path d="M70.7 383.5A244 244 0 0 1 113.1 143.2"/>
-        <path d="M486.9 143.2A244 244 0 0 1 529.3 383.5"/>
-      </g>
-      <!-- spokes and hub -->
-      <g fill="url(#gSpoke)" stroke="rgba(0,0,0,.22)" stroke-width="1.5">
-        <rect x="78" y="266" width="150" height="68" rx="22"/>
-        <rect x="372" y="266" width="150" height="68" rx="22"/>
-        <rect x="266" y="372" width="68" height="150" rx="22"/>
-        <circle cx="300" cy="300" r="106"/>
-        <rect x="226" y="12" width="148" height="106" rx="32"/>
-      </g>
-
-      <!-- hazard, 12 o'clock -->
-      <g class="ctl" id="btnHazard" role="button" tabindex="0" aria-pressed="false" aria-label="Hazard lights">
-        <rect class="face" x="243" y="27" width="114" height="78" rx="20"/>
-        <rect class="ring" x="234" y="18" width="132" height="96" rx="28"/>
-        <polygon class="tri" points="300,35 326,76 274,76" stroke-width="6"/>
-        <polygon class="tri" points="300,52 310,68 290,68" stroke-width="3.5"/>
-        <text class="ink" x="300" y="100" font-size="16">HAZARD</text>
-      </g>
-
-      <!-- horn, left spoke -->
-      <g class="ctl" id="btnHorn" role="button" tabindex="0" aria-label="Horn">
-        <rect class="face" x="95" y="279" width="106" height="42" rx="18"/>
-        <rect class="ring" x="86" y="270" width="124" height="60" rx="26"/>
-        <path class="ink" d="M102 294h8l11-9v30l-11-9h-8z"/>
-        <text class="ink" x="160" y="307" font-size="19">HORN</text>
-      </g>
-
-      <!-- riding assistance, right spoke -->
-      <g class="ctl" id="btnAssist" role="button" tabindex="0" aria-pressed="false" aria-label="Auto riding assistance">
-        <rect class="face" x="399" y="279" width="106" height="42" rx="18"/>
-        <rect class="ring" x="390" y="270" width="124" height="60" rx="26"/>
-        <circle class="led" cx="414" cy="300" r="7"/>
-        <text class="ink" x="464" y="307" font-size="19">AUTO</text>
-      </g>
-
-      <!-- centre display -->
-      <circle cx="300" cy="300" r="88" fill="var(--screen)" stroke="#4d524f" stroke-width="3"/>
-      <g fill="#fff">
-        <rect x="263" y="233" width="28" height="15" rx="3" fill="none" stroke="#fff" stroke-width="2"/>
-        <rect x="291.5" y="237" width="3.5" height="7" rx="1"/>
-        <rect x="266" y="236" width="18" height="9" rx="1.5" fill="var(--signal)"/>
-        <text x="319" y="247" font-size="17">82%</text>
-        <text id="dispSpeed" x="300" y="306" font-size="54">15</text>
-        <text x="300" y="326" font-size="15" fill="#b9c2be" font-weight="400">mph</text>
-        <text x="300" y="355" font-size="16">Range 18 mi</text>
-      </g>
-      <circle cx="300" cy="300" r="88" fill="url(#gGlass)" style="pointer-events:none"/>
-    </svg>
-
     <div class="sr" aria-live="polite" id="live"></div>
   </main>
   <aside class="panel" id="panel" aria-label="Wizard controls">
@@ -378,14 +306,96 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
       <button id="btnRun" type="button"><span id="runText">Start journey</span><kbd>S</kbd></button>
       <button id="btnReset" type="button"><span>Reset demo</span></button>
     </div></section>
-    <section><h2>What the rider does</h2><div class="grid">
-      <button id="wLeft" type="button" aria-pressed="false"><span>Left blinker</span><kbd>&larr;</kbd></button>
-      <button id="wRight" type="button" aria-pressed="false"><span>Right blinker</span><kbd>&rarr;</kbd></button>
-      <button id="wHazard" type="button" aria-pressed="false"><span>Hazard lights</span><kbd>H</kbd></button>
-      <button id="wHorn" type="button"><span>Horn</span><kbd>B</kbd></button>
-      <button id="wAuto" type="button" aria-pressed="false"><span id="autoText">AUTO is off</span><kbd>A</kbd></button>
-      <button id="wTake" type="button"><span>Rider took over</span><kbd>G</kbd></button>
-    </div></section>
+    <section><h2>What the rider does</h2>
+      <svg class="wheel" id="wheel" viewBox="0 0 600 600" role="group" aria-label="Steering wheel controls">
+        <!-- turn-signal paddles: levers behind the wheel at 10 and 2 o'clock, blade reaches past the grip -->
+        <g stroke="#474b48" stroke-width="46"><path d="M224.4 240.9L189.7 213.8"/><path d="M375.6 240.9L410.3 213.8"/></g>
+        <g class="ctl paddle" id="padL" role="button" tabindex="0" aria-pressed="false" aria-label="Left turn signal">
+          <path class="face" d="M178.3 260.4L16.6 207.9A298 298 0 0 1 160.2 36.9L239.9 187A128 128 0 0 0 178.3 260.4Z"/>
+          <path class="ring" d="M178.3 260.4L16.6 207.9A298 298 0 0 1 160.2 36.9L239.9 187A128 128 0 0 0 178.3 260.4Z" stroke-linejoin="round"/>
+          <polygon class="ink" points="138,196 170,172 170,187 198,187 198,205 170,205 170,220"/>
+          <text class="ink" x="184" y="154" font-size="18">LEFT</text>
+        </g>
+        <g class="ctl paddle" id="padR" role="button" tabindex="0" aria-pressed="false" aria-label="Right turn signal">
+          <path class="face" d="M421.7 260.4L583.4 207.9A298 298 0 0 0 439.8 36.9L360.1 187A128 128 0 0 1 421.7 260.4Z"/>
+          <path class="ring" d="M421.7 260.4L583.4 207.9A298 298 0 0 0 439.8 36.9L360.1 187A128 128 0 0 1 421.7 260.4Z" stroke-linejoin="round"/>
+          <polygon class="ink" points="462,196 430,172 430,187 402,187 402,205 430,205 430,220"/>
+          <text class="ink" x="416" y="154" font-size="18">RIGHT</text>
+        </g>
+
+        <!-- rim and grips -->
+        <defs>
+          <linearGradient id="gRim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8d918d"/><stop offset="1" stop-color="#525653"/></linearGradient>
+          <linearGradient id="gSpoke" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#939793"/><stop offset="1" stop-color="#666a67"/></linearGradient>
+          <radialGradient id="gGlass" cx=".5" cy=".15" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient>
+        </defs>
+        <circle cx="300" cy="300" r="244" fill="none" stroke="url(#gRim)" stroke-width="52"/>
+        <circle cx="300" cy="300" r="270" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="2"/>
+        <circle cx="300" cy="300" r="218" fill="none" stroke="rgba(0,0,0,.3)" stroke-width="2"/>
+        <circle cx="300" cy="300" r="264" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="3"/>
+        <g fill="none" stroke-linecap="round" id="grips" class="grips">
+          <path d="M70.7 383.5A244 244 0 0 1 113.1 143.2" stroke="var(--grip)" stroke-width="64"/>
+          <path d="M486.9 143.2A244 244 0 0 1 529.3 383.5" stroke="var(--grip)" stroke-width="64"/>
+        </g>
+        <g fill="none" stroke="rgba(0,0,0,.2)" stroke-width="64" stroke-dasharray="3 15" style="pointer-events:none">
+          <path d="M70.7 383.5A244 244 0 0 1 113.1 143.2"/>
+          <path d="M486.9 143.2A244 244 0 0 1 529.3 383.5"/>
+        </g>
+        <!-- spokes and hub -->
+        <g fill="url(#gSpoke)" stroke="rgba(0,0,0,.22)" stroke-width="1.5">
+          <rect x="78" y="266" width="150" height="68" rx="22"/>
+          <rect x="372" y="266" width="150" height="68" rx="22"/>
+          <rect x="266" y="372" width="68" height="150" rx="22"/>
+          <circle cx="300" cy="300" r="106"/>
+          <rect x="226" y="12" width="148" height="106" rx="32"/>
+        </g>
+
+        <!-- hazard, 12 o'clock -->
+        <g class="ctl" id="btnHazard" role="button" tabindex="0" aria-pressed="false" aria-label="Hazard lights">
+          <rect class="face" x="243" y="27" width="114" height="78" rx="20"/>
+          <rect class="ring" x="234" y="18" width="132" height="96" rx="28"/>
+          <polygon class="tri" points="300,35 326,76 274,76" stroke-width="6"/>
+          <polygon class="tri" points="300,52 310,68 290,68" stroke-width="3.5"/>
+          <text class="ink" x="300" y="100" font-size="16">HAZARD</text>
+        </g>
+
+        <!-- horn, left spoke -->
+        <g class="ctl" id="btnHorn" role="button" tabindex="0" aria-label="Horn">
+          <rect class="face" x="95" y="279" width="106" height="42" rx="18"/>
+          <rect class="ring" x="86" y="270" width="124" height="60" rx="26"/>
+          <path class="ink" d="M102 294h8l11-9v30l-11-9h-8z"/>
+          <text class="ink" x="160" y="307" font-size="19">HORN</text>
+        </g>
+
+        <!-- riding assistance, right spoke -->
+        <g class="ctl" id="btnAssist" role="button" tabindex="0" aria-pressed="false" aria-label="Auto riding assistance">
+          <rect class="face" x="399" y="279" width="106" height="42" rx="18"/>
+          <rect class="ring" x="390" y="270" width="124" height="60" rx="26"/>
+          <circle class="led" cx="414" cy="300" r="7"/>
+          <text class="ink" x="464" y="307" font-size="19">AUTO</text>
+        </g>
+
+        <!-- phone mounted in the centre, vertical -->
+        <rect x="246" y="206" width="108" height="188" rx="17" fill="#050707" stroke="#4d524f" stroke-width="2"/>
+        <rect x="253" y="213" width="94" height="174" rx="11" fill="var(--screen)"/>
+        <g fill="#fff">
+          <rect x="262" y="223" width="22" height="12" rx="3" fill="none" stroke="#fff" stroke-width="1.6"/>
+          <rect x="284.5" y="226" width="3" height="6" rx="1"/>
+          <rect x="264.5" y="225.5" width="14" height="7" rx="1.2" fill="var(--signal)"/>
+          <text x="318" y="234" font-size="13">82%</text>
+          <text id="dispSpeed" x="300" y="302" font-size="50">15</text>
+          <text x="300" y="320" font-size="13" fill="#b9c2be" font-weight="400">mph</text>
+          <text id="dispMode" x="300" y="348" font-size="13">Manual</text>
+          <text x="300" y="374" font-size="12" fill="#b9c2be" font-weight="400">Range 18 mi</text>
+        </g>
+      </svg>
+      <div class="pedals">
+        <button id="pBrake" class="pedal brake" type="button" aria-pressed="false"><span>Brake</span><kbd>&darr;</kbd></button>
+        <button id="pGas" class="pedal gas" type="button" aria-pressed="false"><span>Gas</span><kbd>&uarr;</kbd></button>
+        <button id="wTake" type="button"><span>Rider took over</span><kbd>G</kbd></button>
+      </div>
+      <p class="hint">Click the wheel: blinker paddles, hazard, horn, AUTO, grips (rider took over). Hold a pedal to slow down or speed up. Keys: &larr; &rarr; blinkers, H hazard, B horn, A AUTO, &uarr; gas, &darr; brake.</p>
+    </section>
     <section><h2>Scenarios</h2><div class="grid">
       <button id="btnPed" type="button" aria-pressed="false"><span>Pedestrian crossing</span><kbd>P</kbd></button>
       <button id="btnObs" type="button" aria-pressed="false"><span>Obstacle, take over</span><kbd>T</kbd></button>
@@ -404,7 +414,7 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
       <span>Range 18 mi</span>
     </div>
     <div class="ph-alert warn" id="phAlert" hidden></div>
-    <div class="ph-speed"><span class="ph-limit">Limit <b>25</b></span><b id="phSpeed">15</b><span class="u">mph</span></div>
+    <div class="ph-speed"><span class="ph-limit" id="phLimit">Limit <b>25</b></span><b id="phSpeed">15</b><span class="u">mph</span></div>
     <div class="ph-mode" id="phMode">Manual</div>
     <div class="ph-nav"><span id="phNavIcon"></span><span><span id="phNavLabel">Turn left in</span><b id="phNavDist">100 ft</b></span></div>
     <div class="ph-map"><svg viewBox="-300 -345 360 390" preserveAspectRatio="xMidYMid meet" aria-label="Route map">
@@ -462,7 +472,7 @@ const ICON={
   pin:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round"><path d="M24 44S10 28 10 19a14 14 0 0 1 28 0c0 9-14 25-14 25z"/><circle cx="24" cy="19" r="4.5"/></svg>'};
 
 let G=null,W=0,H=0,f=0,y0=0,st,last=0,blinkOn=false,toastTimer=0,walk=0;
-const fresh=()=>({running:false,started:false,seg:0,z:0,speed:CRUISE,turn:null,left:false,right:false,hazard:false,assist:false,ped:null,arrived:false,blind:{left:0,right:0},obs:null,camX:0,autoHaz:false,steer:0});
+const fresh=()=>({running:false,started:false,seg:0,z:0,speed:CRUISE,turn:null,left:false,right:false,hazard:false,assist:false,ped:null,arrived:false,cruise:CRUISE,gas:false,brake:false,blind:{left:0,right:0},obs:null,camX:0,autoHaz:false,steer:0});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rnd=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)};
 
@@ -577,20 +587,21 @@ function draw(){
 
 /* ---------- simulation ---------- */
 function step(dt){
-  const seg=SEGS[st.seg],dist=seg.len-st.z;let target=CRUISE;
-  if(st.turn)target=8;
-  else if(seg.end==='arrive'){if(dist<70)target=Math.max(2.5,CRUISE*dist/70)}
-  else if(dist<45)target=9;
+  if(!st.assist){if(st.brake)st.cruise=Math.max(0,st.cruise-10*dt);else if(st.gas)st.cruise=Math.min(30,st.cruise+5*dt)}
+  const seg=SEGS[st.seg],dist=seg.len-st.z;let target=st.cruise;
+  if(st.turn)target=Math.min(target,8);
+  else if(seg.end==='arrive'){if(dist<70)target=Math.min(target,Math.max(2.5,CRUISE*dist/70))}
+  else if(dist<45)target=Math.min(target,9);
   if(st.ped&&st.ped.active){const d=st.ped.d;target=Math.min(target,d>56?6:d>42?3:0)}
   const o=st.obs;
   if(o){if(o.phase==='request')target=Math.min(target,8);else if(o.phase==='stopped')target=0;else if(o.d>-10&&o.d<70)target=Math.min(target,9)}
-  const rate=st.speed>target?7:3.5;
+  const rate=st.speed>target?(st.brake?12:7):(st.gas?5:3.5);
   st.speed+=clamp(target-st.speed,-rate*dt,rate*dt);
   const dz=st.speed*1.4667*PACE*dt;st.z+=dz;walk+=dt;
   ['left','right'].forEach(k=>{if(st.blind[k]>0){st.blind[k]-=dt;if(st.blind[k]<=0){st.blind[k]=0;toast((k==='left'?'Left':'Right')+' side clear.');render()}}});
   if(o)obstacle(o,dt,dz);
   if(st.ped){st.ped.d-=dz;st.ped.x-=4.2*dt;
-    if(st.ped.active&&st.ped.x<-20){st.ped.active=false;$('alert').hidden=true;toast('Road clear. Returning to 15 mph.')}
+    if(st.ped.active&&st.ped.x<-20){st.ped.active=false;$('alert').hidden=true;toast('Road clear.')}
     if(st.ped.x<-42||st.ped.d<5)st.ped=null}
   if(st.turn){st.turn.t+=dt/TURN_S;
     if(st.turn.t>=1){const dir=st.turn.dir;st.seg++;st.z=0;st.turn=null;wheel.style.transform='';
@@ -629,7 +640,7 @@ let navKey='',spKey='';
 function live(){
   const n=navState();if(n[0]+n[1]!==navKey){navKey=n[0]+n[1];$('navIcon').innerHTML=ICON[n[0]];const k=n[1].indexOf(' in ');
     $('navLabel').textContent=k<0?n[1]:n[1].slice(0,k+3);$('navLabel').classList.toggle('solo',k<0);$('navDist').textContent=k<0?'':n[1].slice(k+4)}
-  const s=String(Math.round(st.speed));if(s!==spKey){spKey=s;$('hudSpeed').textContent=s;$('dispSpeed').textContent=s}
+  const s=String(Math.round(st.speed));if(s!==spKey){spKey=s;$('limit').classList.toggle('over',+s>25);$('hudSpeed').textContent=s;$('dispSpeed').textContent=s}
 }
 function render(){
   const L=st.hazard||st.left,R=st.hazard||st.right;
@@ -650,9 +661,8 @@ function render(){
   $('btnRun').disabled=st.arrived;
   $('simState').textContent=st.arrived?'Arrived':st.running?'Riding':st.started?'Paused':'Paused at start';
   $('tbState').classList.toggle('live',st.running);
-  [['wLeft',st.left&&!st.hazard],['wRight',st.right&&!st.hazard],['wHazard',st.hazard],['wAuto',st.assist],['btnPed',!!st.ped],['btnObs',!!st.obs],
-   ['btnBL',st.blind.left>0],['btnBR',st.blind.right>0]].forEach(a=>$(a[0]).setAttribute('aria-pressed',!!a[1]));
-  $('autoText').textContent=st.assist?'AUTO is on':'AUTO is off';$('wTake').classList.toggle('call',pend);
+  [['pBrake',st.brake],['pGas',st.gas],['btnPed',!!st.ped],['btnObs',!!st.obs],['btnBL',st.blind.left>0],['btnBR',st.blind.right>0]].forEach(a=>$(a[0]).setAttribute('aria-pressed',!!a[1]));
+  $('dispMode').textContent=pend?'TAKE OVER':st.assist?'Assist active':'Manual';$('wTake').classList.toggle('call',pend);
   send();
 }
 const T0=performance.now();
@@ -671,7 +681,7 @@ const RT=[{x:0,y:0,hx:0,hy:-1},{x:-18,y:-118,hx:-1,hy:0},{x:-244,y:-124,hx:0,hy:
 function phoneDraw(){
   const n=navState(),k=n[1].indexOf(' in '),o=st.obs,pend=!!o&&o.phase!=='manual',m=$('phMode');
   $('phNavIcon').innerHTML=ICON[n[0]];$('phNavLabel').textContent=k<0?n[1]:n[1].slice(0,k+3);$('phNavDist').textContent=k<0?'':n[1].slice(k+4);
-  $('phSpeed').textContent=Math.round(st.speed);
+  $('phSpeed').textContent=Math.round(st.speed);$('phLimit').classList.toggle('over',Math.round(st.speed)>25);
   m.textContent=pend?'Take over':st.assist?'Assist active':'Manual';m.classList.toggle('on',st.assist&&!pend);m.classList.toggle('alarm',pend);
   $('phone').classList.toggle('take',pend);
   let a='',c='warn';
@@ -705,7 +715,7 @@ function hazard(){st.autoHaz=false;st.hazard=!st.hazard;if(st.hazard){st.left=st
 function assist(){
   if(takeover())return;
   if(st.obs){toast('Assist is unavailable until the obstacle is passed.');return}
-  st.assist=!st.assist;
+  st.assist=!st.assist;if(st.assist)st.cruise=CRUISE;
   toast(st.assist?'Assist active. Stay attentive. Steer or brake to take over.':'Manual riding. You are in full control.');render()}
 let ac;
 function tone(fr,dur){
@@ -765,10 +775,31 @@ function bind(id,fn){const el=$(id);
   el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();go()}});
   return go}
 const act={ArrowLeft:bind('padL',()=>signal('left')),ArrowRight:bind('padR',()=>signal('right')),h:bind('btnHazard',hazard),a:bind('btnAssist',assist)};
-bind('btnHorn',horn);
+act.b=bind('btnHorn',horn);
 $('btnRun').addEventListener('click',run);$('btnPed').addEventListener('click',ped);$('btnObs').addEventListener('click',obs);$('btnBL').addEventListener('click',()=>blind('left'));$('btnBR').addEventListener('click',()=>blind('right'));$('grips').addEventListener('click',takeover);$('btnReset').addEventListener('click',reset);
-[['wLeft',()=>signal('left'),'ArrowLeft'],['wRight',()=>signal('right'),'ArrowRight'],['wHazard',hazard,'h'],['wAuto',assist,'a'],['wHorn',horn,'b'],
- ['wTake',()=>{if(!takeover())note('No takeover is pending.')},'g']].forEach(a=>{$(a[0]).addEventListener('click',a[1]);act[a[2]]=a[1]});
+act.g=()=>{if(!takeover())note('No takeover is pending.')};$('wTake').addEventListener('click',act.g);
+function pedal(k,on){
+  if(st[k]===on)return;
+  if(on){
+    if(st.arrived){note('Journey is complete. Reset the demo to ride again.');return}
+    logit((k==='gas'?'Gas':'Brake')+' pressed.',true);
+    if(k==='brake'&&takeover()){}
+    else if(st.assist){
+      if(k==='brake'){st.assist=false;st.cruise=Math.min(st.cruise,st.speed);toast('Brake pressed. Assist is off. You are in control.')}
+      else note('Gas does nothing while AUTO is on.');
+    }
+    if(k==='gas'&&!st.running){st.running=true;st.started=true;last=0}
+  }
+  st[k]=on;render();
+}
+[['pGas','gas','ArrowUp'],['pBrake','brake','ArrowDown']].forEach(a=>{const el=$(a[0]);
+  el.addEventListener('pointerdown',e=>{e.preventDefault();pedal(a[1],true)});
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>el.addEventListener(t,()=>pedal(a[1],false)));
+  el.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();pedal(a[1],true)}});
+  el.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter')pedal(a[1],false)});
+  document.addEventListener('keydown',e=>{if(!FOLLOW&&e.key===a[2]&&!/^(INPUT|TEXTAREA)$/.test(e.target.tagName)){e.preventDefault();pedal(a[1],true)}});
+  document.addEventListener('keyup',e=>{if(e.key===a[2])pedal(a[1],false)})});
+window.addEventListener('blur',()=>{if(st.gas||st.brake){pedal('gas',false);pedal('brake',false)}});
 Object.assign(act,{s:run,p:ped,t:obs,q:()=>blind('left'),e:()=>blind('right')});
 $('btnRemote').addEventListener('click',()=>{
   if(room)return;const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<5;i++)c+=A[Math.floor(Math.random()*A.length)];
@@ -923,7 +954,7 @@ function tick(now){
   const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
   if(st.running&&!FOLLOW){step(dt);live();draw();send(now)}else if(now-lastSend>250)send(now);
   if(mq&&mq.connected&&room&&!FOLLOW&&now-lastPub>200){lastPub=now;try{mq.publish('moped-ar-view/'+room+'/state',JSON.stringify(snap()))}catch(e){}}
-  const b=Math.floor(now/420)%2===0;if(b!==blinkOn){blinkOn=b;stage.classList.toggle('blink',b);$('phone').classList.toggle('blink',b)}
+  const b=Math.floor(now/420)%2===0;if(b!==blinkOn){blinkOn=b;document.documentElement.classList.toggle('blink',b)}
   requestAnimationFrame(tick);
 }
 st=fresh();try{G=PHONE?null:make3d()}catch(e){G=null}if(!G)$('gl').hidden=true;resize();render();live();draw();

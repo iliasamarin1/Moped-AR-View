@@ -18,7 +18,7 @@ The same address serves three screens. Open the plain address first; it is the c
 
 | Screen | Address ending | Who looks at it | What it shows |
 | --- | --- | --- | --- |
-| Controller | (nothing) | Wizards | A button for every rider action and scenario, a preview of the rider's view, and a session log. No wheel. |
+| Controller | (nothing) | Wizards | The wheel (click its paddles, hazard, horn, AUTO and grips), gas and brake pedals to hold, scenario buttons, a preview of the rider's view, and a session log. |
 | Participant | `#display` | Rider | The AR view only. |
 | Phone | `#phone` | Rider | A vertical phone display: speed, limit, mode, next turn, route map, blinkers and alerts. |
 
@@ -26,7 +26,9 @@ The same address serves three screens. Open the plain address first; it is the c
 
 **On a real phone:** click **Connect a real phone** on the controller. It shows an address ending in `#phone-` and a five-character code. Open that address on the phone, or open the `#phone` address and type the code. Both devices need internet access. The ride state is relayed through a public message broker (broker.hivemq.com) under that random code; nothing personal is sent.
 
-Keyboard shortcuts on the controller: arrow keys for blinkers, H hazard, B horn, A AUTO, G rider took over, S start or pause, P pedestrian, T obstacle, Q and E blind spots.
+Keyboard shortcuts on the controller: left and right arrows for blinkers, hold up arrow for gas and down arrow for brake, H hazard, B horn, A AUTO, G rider took over, S start or pause, P pedestrian, T obstacle, Q and E blind spots.
+
+Pedals: holding gas speeds up (to 30 mph; the limit ring turns red above 25) and starts the journey if it has not started. Holding brake slows to a stop. Braking while AUTO is on switches to manual, and braking during a takeover request counts as taking over.
 
 Messages meant only for the wizards (for example "Not enough straight road here") appear in the panel and the log, never on the rider's screens.
 
