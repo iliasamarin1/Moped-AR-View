@@ -28,6 +28,10 @@ The same address serves three screens. Open the plain address first; it is the c
 
 Keyboard shortcuts on the controller: left and right arrows for blinkers, hold up arrow for gas and down arrow for brake, H hazard, B horn, A AUTO, G rider took over, S start or pause, P pedestrian, T obstacle, Q and E blind spots.
 
+Power: the button on the steering column below the wheel (or O) switches the moped on and off. When it is off the rider's AR display and phone go dark and every other control is ignored. The moped must be stopped before it can be switched off.
+
+Steering: drag the slider under the wheel (or hold Z or X) to turn the wheel. The rider's view swings and the moped drifts across the lane while it is moving; the slider springs back when released. Turns at junctions still happen automatically. Steering while AUTO is on switches to manual.
+
 Pedals: holding gas speeds up (to 30 mph; the limit ring turns red above 25) and starts the journey if it has not started. Holding brake slows to a stop. Braking while AUTO is on switches to manual, and braking during a takeover request counts as taking over.
 
 Messages meant only for the wizards (for example "Not enough straight road here") appear in the panel and the log, never on the rider's screens.
