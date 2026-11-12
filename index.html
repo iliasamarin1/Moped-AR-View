@@ -41,7 +41,75 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 .tb-note{flex-basis:100%;font-size:12px;opacity:.75}
 
 /* participant screen (#display): AR view only, driven by the controller window */
-.display .testbar,.display .wheel,.display .cowl{display:none}
+.wheel,.cowl{display:none}
+.display .testbar,.display .panel{display:none}
+.phone-mode .app{display:none}
+.work{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr)}
+.display .work{grid-template-columns:1fr}
+@media (max-width:900px){.work{grid-template-columns:1fr;grid-template-rows:40% minmax(0,1fr)}.display .work{grid-template-rows:1fr}}
+.testbar .tb-state{margin-left:0}
+.tb-links{margin-left:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.remote{flex-basis:100%;font-size:14px}
+.remote b{font-size:16px;user-select:all}
+
+/* wizard panel: one large button per action, no wheel */
+.panel{background:var(--bar);border-left:1px solid var(--bar-line);padding:14px 16px 20px;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:14px}
+.panel h2{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#4b524e}
+.panel .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.panel button{font:inherit;font-size:16px;font-weight:700;min-height:58px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--bar-ink);
+  background:var(--bar-btn);color:var(--bar-ink);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left}
+.panel button:hover{background:#fff}
+.panel button:focus-visible{outline:3px solid #0b6f8f;outline-offset:2px}
+.panel button:disabled{opacity:.45;cursor:default}
+.panel button[aria-pressed="true"]{background:#1d8a4c;border-color:#1d8a4c;color:#fff}
+.panel #wHazard[aria-pressed="true"]{background:var(--hazard);border-color:var(--hazard)}
+.panel #btnBL[aria-pressed="true"],.panel #btnBR[aria-pressed="true"],.panel #btnPed[aria-pressed="true"],.panel #btnObs[aria-pressed="true"]{background:#b35c00;border-color:#b35c00}
+.panel #wTake.call{background:var(--hazard);border-color:var(--hazard);color:#fff}
+.panel #btnReset{border-style:dashed;font-weight:400}
+.panel kbd{font:inherit;font-size:12px;font-weight:400;padding:1px 6px;border:1px solid currentColor;border-radius:5px;opacity:.75;flex:none}
+.wiz-note{margin:0;font-size:14px;min-height:2.7em}
+.log{margin:0;padding:0;list-style:none;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.log li{display:flex;gap:8px}
+.log time{font-variant-numeric:tabular-nums;color:#5a615d;flex:none}
+.log .wiz{color:#5a615d}
+
+/* phone screen (#phone): vertical display mounted on the wheel */
+.phone-wrap{position:fixed;inset:0;background:#2a2d2c;display:grid;place-items:center;padding:12px;font-family:var(--font)}
+.phone{container-type:size;height:100%;max-height:920px;aspect-ratio:9/19;max-width:100%;background:#0e1413;color:#fff;border-radius:34px;border:6px solid #000;overflow:hidden}
+.phone.take{background:#7d1611}
+.phone.take.blink{background:var(--hazard)}
+@media (max-width:520px){.phone-wrap{padding:0}.phone{aspect-ratio:auto;width:100%;max-height:none;border-radius:0;border:0}}
+.ph{height:100%;box-sizing:border-box;padding:4cqh 7cqw 2.5cqh;display:flex;flex-direction:column;gap:2cqh}
+.ph-top{display:flex;justify-content:space-between;align-items:center;font-size:2.6cqh;font-weight:700}
+.ph-batt{display:flex;align-items:center;gap:2cqw}
+.ph-batt svg{height:2.6cqh;width:auto}
+.ph-alert{border-radius:2cqh;padding:1.5cqh 4cqw;font-size:3.4cqh;font-weight:700;text-align:center}
+.ph-alert.warn{background:#3a2a10;border:.4cqh solid var(--blind)}
+.ph-alert.danger{background:#fff;color:#7d1611}
+.ph-speed{display:flex;flex-direction:column;align-items:center;line-height:1}
+.ph-speed>b{font-size:19cqh;font-variant-numeric:tabular-nums}
+.ph-speed .u{font-size:3cqh;color:var(--ink-dim)}
+.ph-limit{display:flex;align-items:center;gap:2cqw;font-size:2.4cqh;color:var(--ink-dim);margin-bottom:.6cqh}
+.ph-limit b{display:grid;place-items:center;width:5.4cqh;height:5.4cqh;border-radius:50%;border:.5cqh solid var(--warn);color:#fff;font-size:2.6cqh}
+.ph-mode{align-self:center;font-size:3cqh;font-weight:700;padding:.5cqh 5cqw;border:.35cqh solid rgba(255,255,255,.55);border-radius:99cqh}
+.ph-mode.on{border-color:var(--signal)}
+.ph-mode.alarm{background:#fff;color:#7d1611;border-color:#fff}
+.ph-nav{display:flex;align-items:center;gap:4cqw;background:#18201f;border-radius:2.4cqh;padding:1.5cqh 5cqw}
+#phNavIcon{width:8cqh;height:8cqh;color:var(--route);flex:none}
+#phNavIcon svg{width:100%;height:100%;display:block}
+#phNavLabel{display:block;font-size:2.5cqh;font-weight:700;color:var(--route)}
+#phNavDist{display:block;font-size:5cqh;line-height:1.05}
+.ph-map{flex:1;min-height:0;background:#18201f;border-radius:2.4cqh;overflow:hidden}
+.ph-map svg{width:100%;height:100%;display:block}
+.ph-sig{display:flex;justify-content:space-between;align-items:center;font-size:2.6cqh;font-weight:700;color:var(--signal)}
+.ph-sig svg{width:7cqh;height:7cqh;display:block}
+.ph-sig .lamp{fill:none;stroke:rgba(255,255,255,.5);stroke-width:2;stroke-linejoin:round}
+.ph-sig .on .lamp{fill:var(--signal-dim);stroke:var(--signal)}
+.blink .ph-sig .on .lamp{fill:var(--signal)}
+.ph-conn{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;justify-content:center;font-size:13px;color:var(--ink-dim)}
+.ph-conn form{display:flex;gap:6px}
+.ph-conn input{font:inherit;font-size:16px;width:7.5em;padding:4px 8px;border-radius:6px;border:1px solid #66706c;background:#18201f;color:#fff;text-transform:uppercase}
+.ph-conn button{font:inherit;font-size:14px;padding:4px 12px;border-radius:6px;border:1px solid #fff;background:none;color:#fff;cursor:pointer}
 .display .stage{cursor:none}
 .testbar a.open{font-weight:700;min-height:36px;padding:6px 14px;border-radius:8px;border:1.5px solid var(--bar-ink);background:var(--bar-ink);color:#fff;
   text-decoration:none;display:inline-flex;align-items:center}
@@ -158,17 +226,17 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 
 <div class="app">
   <header class="testbar">
-    <span class="tb-title">Test controls</span>
-    <button id="btnRun" type="button">Start journey</button>
-    <button id="btnPed" type="button">Pedestrian scenario</button>
-    <button id="btnObs" type="button">Takeover scenario</button>
-    <button id="btnBL" type="button">Blind spot left</button>
-    <button id="btnBR" type="button">Blind spot right</button>
-    <button id="btnReset" type="button">Reset demo</button>
-    <a class="open" id="lnkDisplay" href="#display" target="_blank" rel="noopener">Open participant screen</a>
+    <span class="tb-title">Wizard controls</span>
     <span class="tb-state" id="tbState"><span class="dot"></span><span id="simState">Paused at start</span></span>
+    <span class="tb-links">
+      <a class="open" href="#display" target="_blank" rel="noopener">Open participant screen</a>
+      <a class="open" href="#phone" target="_blank" rel="noopener">Open phone screen</a>
+      <button id="btnRemote" type="button">Connect a real phone</button>
+    </span>
+    <div class="remote" id="remoteBox" hidden>On the phone, open <b id="remoteUrl"></b> &nbsp; <span id="remoteState"></span></div>
   </header>
 
+  <div class="work">
   <main class="stage" id="stage">
     <canvas id="gl" aria-hidden="true"></canvas>
     <canvas id="scene" aria-label="Rider's view of a quiet neighborhood street through the windshield"></canvas>
@@ -304,6 +372,51 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 
     <div class="sr" aria-live="polite" id="live"></div>
   </main>
+  <aside class="panel" id="panel" aria-label="Wizard controls">
+    <p class="wiz-note" id="wizNote">Press the button that matches what the rider does on the cardboard wheel. The rider never sees this panel.</p>
+    <section><h2>Journey</h2><div class="grid">
+      <button id="btnRun" type="button"><span id="runText">Start journey</span><kbd>S</kbd></button>
+      <button id="btnReset" type="button"><span>Reset demo</span></button>
+    </div></section>
+    <section><h2>What the rider does</h2><div class="grid">
+      <button id="wLeft" type="button" aria-pressed="false"><span>Left blinker</span><kbd>&larr;</kbd></button>
+      <button id="wRight" type="button" aria-pressed="false"><span>Right blinker</span><kbd>&rarr;</kbd></button>
+      <button id="wHazard" type="button" aria-pressed="false"><span>Hazard lights</span><kbd>H</kbd></button>
+      <button id="wHorn" type="button"><span>Horn</span><kbd>B</kbd></button>
+      <button id="wAuto" type="button" aria-pressed="false"><span id="autoText">AUTO is off</span><kbd>A</kbd></button>
+      <button id="wTake" type="button"><span>Rider took over</span><kbd>G</kbd></button>
+    </div></section>
+    <section><h2>Scenarios</h2><div class="grid">
+      <button id="btnPed" type="button" aria-pressed="false"><span>Pedestrian crossing</span><kbd>P</kbd></button>
+      <button id="btnObs" type="button" aria-pressed="false"><span>Obstacle, take over</span><kbd>T</kbd></button>
+      <button id="btnBL" type="button" aria-pressed="false"><span>Vehicle in left blind spot</span><kbd>Q</kbd></button>
+      <button id="btnBR" type="button" aria-pressed="false"><span>Vehicle in right blind spot</span><kbd>E</kbd></button>
+    </div></section>
+    <section><h2>Session log</h2><ol class="log" id="log"></ol></section>
+  </aside>
+  </div>
+</div>
+
+<div class="phone-wrap" id="phoneWrap" hidden>
+  <div class="phone" id="phone"><div class="ph">
+    <div class="ph-top">
+      <span class="ph-batt"><svg viewBox="0 0 34 16"><rect x="1" y="1" width="28" height="14" rx="3" fill="none" stroke="#fff" stroke-width="2"/><rect x="30" y="5" width="3" height="6" rx="1" fill="#fff"/><rect x="4" y="4" width="18" height="8" rx="1.5" fill="var(--signal)"/></svg>82%</span>
+      <span>Range 18 mi</span>
+    </div>
+    <div class="ph-alert warn" id="phAlert" hidden></div>
+    <div class="ph-speed"><span class="ph-limit">Limit <b>25</b></span><b id="phSpeed">15</b><span class="u">mph</span></div>
+    <div class="ph-mode" id="phMode">Manual</div>
+    <div class="ph-nav"><span id="phNavIcon"></span><span><span id="phNavLabel">Turn left in</span><b id="phNavDist">100 ft</b></span></div>
+    <div class="ph-map"><svg viewBox="-300 -345 360 390" preserveAspectRatio="xMidYMid meet" aria-label="Route map">
+      <g stroke="#2e3b38" stroke-width="24" stroke-linecap="round"><path d="M-6 40V-340M50-112H-295M-250 40V-340"/></g>
+      <polyline points="0,0 0,-100 -5,-111 -18,-118 -238,-118 -243,-120 -244,-124 -244,-304" fill="none" stroke="var(--route)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="-244" cy="-304" r="11" fill="var(--route)"/><circle cx="-244" cy="-304" r="4.5" fill="#0e1413"/>
+      <circle id="phDot" cx="0" cy="0" r="10" fill="#fff" stroke="#0e1413" stroke-width="3"/>
+    </svg></div>
+    <div class="ph-sig"><span id="phL"><svg viewBox="0 0 32 32"><polygon class="lamp" points="3,16 16,4 16,11 29,11 29,21 16,21 16,28"/></svg></span><span id="phSigText"></span><span id="phR"><svg viewBox="0 0 32 32"><polygon class="lamp" points="29,16 16,4 16,11 3,11 3,21 16,21 16,28"/></svg></span></div>
+    <div class="ph-conn"><span id="phConnText">Waiting for the controller.</span>
+      <form id="joinForm"><input id="joinCode" maxlength="6" placeholder="Phone code" aria-label="Phone code from the controller" autocomplete="off"><button type="submit">Join</button></form></div>
+  </div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -313,12 +426,30 @@ const $=id=>document.getElementById(id);
 const stage=$('stage'),cv=$('scene'),ctx=cv.getContext('2d'),wheel=$('wheel');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Wizard-of-Oz split: the normal page is the controller; the same page with #display is the participant screen.
-const FOLLOW=location.hash==='#display';
+const HASH=location.hash,PHONE=/^#phone/.test(HASH),DISPLAY=HASH==='#display',FOLLOW=PHONE||DISPLAY;
 let chan=null,lastSend=0;try{chan=new BroadcastChannel('moped-ar-view')}catch(e){}
+function snap(){return{st,walk,toast:[$('toast').hidden,$('toastText').textContent],alert:$('alert').hidden,
+  tk:[$('tk').hidden,$('tk').classList.contains('soft'),$('tkTitle').textContent,$('tkSub').textContent]}}
 function send(now){
   if(!chan||FOLLOW||!st)return;lastSend=now||performance.now();
-  try{chan.postMessage({st,walk,toast:[$('toast').hidden,$('toastText').textContent],alert:$('alert').hidden,
-    tk:[$('tk').hidden,$('tk').classList.contains('soft'),$('tkTitle').textContent,$('tkSub').textContent]})}catch(e){}
+  try{chan.postMessage(snap())}catch(e){}
+}
+// Optional link to a real phone on another device, relayed through a public message broker under a random room code.
+const BROKER=new URLSearchParams(location.search).get('broker')||'wss://broker.hivemq.com:8884/mqtt';
+let mq=null,room='',lastPub=0;
+function remoteState(t){$(PHONE?'phConnText':'remoteState').textContent=t}
+function remote(code,host){
+  room=code;remoteState('Connecting.');
+  const topic='moped-ar-view/'+code,go=()=>{try{
+    mq=mqtt.connect(BROKER,{reconnectPeriod:3000,connectTimeout:10000});
+    mq.on('connect',()=>{remoteState(host?'Link ready. Waiting for the phone.':'Linked to controller '+code+'.');mq.subscribe(topic+(host?'/hello':'/state'));if(!host)mq.publish(topic+'/hello','1')});
+    mq.on('offline',()=>remoteState('Link offline. Retrying.'));mq.on('error',()=>remoteState('Link error. Retrying.'));
+    mq.on('message',(t,p)=>{if(host){remoteState('Phone connected.');return}try{apply(JSON.parse(p.toString()))}catch(e){}});
+    if(!host)setInterval(()=>{if(mq.connected)mq.publish(topic+'/hello','1')},5000);
+  }catch(e){remoteState('Link failed.')}};
+  if(window.mqtt)return go();
+  const sc=document.createElement('script');sc.src='https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js';sc.onload=go;
+  sc.onerror=()=>remoteState('Could not load the link. Check the internet connection.');document.head.appendChild(sc);
 }
 const SEGS=[{len:100,end:'left'},{len:220,end:'right'},{len:180,end:'arrive'}];
 const PACE=.5,CRUISE=15,CAM_H=4.2,ZN=3.5,ZF=900,TURN_S=2.4;
@@ -339,9 +470,9 @@ function resize(){
   const r=stage.getBoundingClientRect();W=r.width;H=r.height;
   const dpr=Math.min(window.devicePixelRatio||1,2);
   cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
-  const tall=H>W,D=FOLLOW?H*.1:clamp(Math.min(W*.92,H*.46),220,560);
+  const D=H*.1;
   stage.style.setProperty('--D',D+'px');
-  f=.7*Math.max(W,.8*H);y0=H*(FOLLOW?.36:tall?.3:.26);
+  f=.7*Math.max(W,.8*H);y0=H*.36;
   if(G)G.resize();
 }
 
@@ -515,16 +646,49 @@ function render(){
   $('modeCheck').hidden=!st.assist||pend;
   $('alertSub').textContent=st.assist?'Assist is slowing':'Slowing';
   [['left','blindL'],['right','blindR']].forEach(a=>{const on=st.blind[a[0]]>0;$(a[1]).classList.toggle('on',on);$(a[1]+'Tag').hidden=!on});
-  $('btnRun').textContent=st.arrived?'Journey complete':st.running?'Pause journey':st.started?'Resume journey':'Start journey';
+  $('runText').textContent=st.arrived?'Journey complete':st.running?'Pause journey':st.started?'Resume journey':'Start journey';
   $('btnRun').disabled=st.arrived;
   $('simState').textContent=st.arrived?'Arrived':st.running?'Riding':st.started?'Paused':'Paused at start';
   $('tbState').classList.toggle('live',st.running);
+  [['wLeft',st.left&&!st.hazard],['wRight',st.right&&!st.hazard],['wHazard',st.hazard],['wAuto',st.assist],['btnPed',!!st.ped],['btnObs',!!st.obs],
+   ['btnBL',st.blind.left>0],['btnBR',st.blind.right>0]].forEach(a=>$(a[0]).setAttribute('aria-pressed',!!a[1]));
+  $('autoText').textContent=st.assist?'AUTO is on':'AUTO is off';$('wTake').classList.toggle('call',pend);
   send();
 }
-function toast(msg){
-  $('toastText').textContent=msg;$('toast').hidden=false;$('live').textContent=msg;
+const T0=performance.now();
+function logit(msg,wiz){
+  const li=document.createElement('li'),sec=Math.floor((performance.now()-T0)/1000),tm=document.createElement('time'),sp=document.createElement('span');
+  tm.textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');sp.textContent=msg;if(wiz)sp.className='wiz';
+  li.appendChild(tm);li.appendChild(sp);const l=$('log');l.insertBefore(li,l.firstChild);while(l.children.length>60)l.removeChild(l.lastChild);
+}
+function note(msg){$('wizNote').textContent=msg;logit(msg,true)}   // wizard only, never shown to the rider
+function toast(msg){                                                // shown to the rider
+  $('toastText').textContent=msg;$('toast').hidden=false;$('live').textContent=msg;logit(msg);
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>{$('toast').hidden=true;send()},4500);
   send();
+}
+const RT=[{x:0,y:0,hx:0,hy:-1},{x:-18,y:-118,hx:-1,hy:0},{x:-244,y:-124,hx:0,hy:-1}];
+function phoneDraw(){
+  const n=navState(),k=n[1].indexOf(' in '),o=st.obs,pend=!!o&&o.phase!=='manual',m=$('phMode');
+  $('phNavIcon').innerHTML=ICON[n[0]];$('phNavLabel').textContent=k<0?n[1]:n[1].slice(0,k+3);$('phNavDist').textContent=k<0?'':n[1].slice(k+4);
+  $('phSpeed').textContent=Math.round(st.speed);
+  m.textContent=pend?'Take over':st.assist?'Assist active':'Manual';m.classList.toggle('on',st.assist&&!pend);m.classList.toggle('alarm',pend);
+  $('phone').classList.toggle('take',pend);
+  let a='',c='warn';
+  if(o&&o.phase==='request'){a='Take over now';c='danger'}else if(o&&o.phase==='stopped'){a='Stopping safely';c='danger'}
+  else if(o&&!o.passed)a='Obstacle ahead';else if(st.ped&&st.ped.active)a='Pedestrian ahead';
+  else if(st.blind.left>0&&st.blind.right>0)a='Vehicles on both sides';else if(st.blind.left>0)a='Vehicle left';else if(st.blind.right>0)a='Vehicle right';
+  const al=$('phAlert');al.hidden=!a;al.textContent=a;al.className='ph-alert '+c;
+  $('phL').classList.toggle('on',st.hazard||st.left);$('phR').classList.toggle('on',st.hazard||st.right);
+  $('phSigText').textContent=st.hazard?'Hazard on':st.left?'Left blinker on':st.right?'Right blinker on':'';
+  const r=RT[st.seg],z=Math.min(st.z,SEGS[st.seg].len);$('phDot').setAttribute('cx',r.x+r.hx*z);$('phDot').setAttribute('cy',r.y+r.hy*z);
+}
+function apply(m){
+  if(!m||!m.st)return;st=m.st;walk=m.walk;
+  if(PHONE){if(!room)$('phConnText').textContent='Showing the live ride.';phoneDraw();return}
+  $('toast').hidden=m.toast[0];$('toastText').textContent=m.toast[1];$('alert').hidden=m.alert;
+  $('tk').hidden=m.tk[0];$('tk').classList.toggle('soft',m.tk[1]);$('tkTitle').textContent=m.tk[2];$('tkSub').textContent=m.tk[3];
+  $('wait').hidden=true;render();live();draw();
 }
 
 /* ---------- controls ---------- */
@@ -564,9 +728,9 @@ function blind(side){
 }
 function obs(){
   const seg=SEGS[st.seg];
-  if(st.arrived){toast('Journey is complete. Reset the demo to run the takeover scenario.');return}
-  if(st.obs||st.ped){toast('Another scenario is already running.');return}
-  if(st.turn||seg.len-st.z<100){toast('Not enough straight road here. Try the takeover scenario just after a turn.');return}
+  if(st.arrived){note('Journey is complete. Reset the demo to run the takeover scenario.');return}
+  if(st.obs||st.ped){note('Another scenario is already running.');return}
+  if(st.turn||seg.len-st.z<100){note('Not enough straight road here. Try the takeover scenario just after a turn.');return}
   const auto=st.assist;
   st.obs={d:70,phase:auto?'request':'manual',t:5,beep:0,n:0};
   $('tk').hidden=false;$('tk').classList.toggle('soft',!auto);
@@ -583,17 +747,17 @@ function horn(){
   toast('Horn sounded.');
 }
 function run(){if(st.arrived)return;st.running=!st.running;st.started=true;last=0;
-  toast(st.running?'Journey running.':'Journey paused.');render()}
+  note(st.running?'Journey running.':'Journey paused.');render()}
 function ped(){
   const seg=SEGS[st.seg];
-  if(st.arrived){toast('Journey is complete. Reset the demo to run the pedestrian scenario.');return}
-  if(st.ped||st.obs){toast('Another scenario is already running.');return}
-  if(st.turn||seg.len-st.z<82){toast('Too close to the next turn. Try the pedestrian scenario on the next straight.');return}
+  if(st.arrived){note('Journey is complete. Reset the demo to run the pedestrian scenario.');return}
+  if(st.ped||st.obs){note('Another scenario is already running.');return}
+  if(st.turn||seg.len-st.z<82){note('Too close to the next turn. Try the pedestrian scenario on the next straight.');return}
   st.ped={d:72,x:14,active:true};$('alert').hidden=false;
   if(!st.running){st.running=true;st.started=true;last=0}
   $('live').textContent='Pedestrian ahead. '+(st.assist?'Assist is slowing.':'Slowing.');render();
 }
-function reset(){st=fresh();wheel.style.transform='';$('alert').hidden=true;$('tk').hidden=true;navKey=spKey='';render();live();draw();toast('Demo reset.')}
+function reset(){st=fresh();wheel.style.transform='';$('alert').hidden=true;$('tk').hidden=true;navKey=spKey='';render();live();draw();note('Demo reset.')}
 
 function bind(id,fn){const el=$(id);
   const go=()=>{el.classList.add('pressed');setTimeout(()=>el.classList.remove('pressed'),160);fn()};
@@ -603,7 +767,13 @@ function bind(id,fn){const el=$(id);
 const act={ArrowLeft:bind('padL',()=>signal('left')),ArrowRight:bind('padR',()=>signal('right')),h:bind('btnHazard',hazard),a:bind('btnAssist',assist)};
 bind('btnHorn',horn);
 $('btnRun').addEventListener('click',run);$('btnPed').addEventListener('click',ped);$('btnObs').addEventListener('click',obs);$('btnBL').addEventListener('click',()=>blind('left'));$('btnBR').addEventListener('click',()=>blind('right'));$('grips').addEventListener('click',takeover);$('btnReset').addEventListener('click',reset);
-document.addEventListener('keydown',e=>{if(FOLLOW||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.length===1?e.key.toLowerCase():e.key;
+[['wLeft',()=>signal('left'),'ArrowLeft'],['wRight',()=>signal('right'),'ArrowRight'],['wHazard',hazard,'h'],['wAuto',assist,'a'],['wHorn',horn,'b'],
+ ['wTake',()=>{if(!takeover())note('No takeover is pending.')},'g']].forEach(a=>{$(a[0]).addEventListener('click',a[1]);act[a[2]]=a[1]});
+Object.assign(act,{s:run,p:ped,t:obs,q:()=>blind('left'),e:()=>blind('right')});
+$('btnRemote').addEventListener('click',()=>{
+  if(room)return;const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<5;i++)c+=A[Math.floor(Math.random()*A.length)];
+  $('remoteBox').hidden=false;$('remoteUrl').textContent=location.host+location.pathname+'#phone-'+c;remote(c,true);note('Phone link started with code '+c+'.')});
+document.addEventListener('keydown',e=>{if(FOLLOW||e.ctrlKey||e.metaKey||e.altKey||/^(INPUT|TEXTAREA)$/.test(e.target.tagName))return;const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(act[k]){e.preventDefault();act[k]()}});
 
 /* ---------- 3D street (falls back to the flat drawing above if WebGL is unavailable) ---------- */
@@ -752,17 +922,18 @@ function make3d(){
 function tick(now){
   const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
   if(st.running&&!FOLLOW){step(dt);live();draw();send(now)}else if(now-lastSend>250)send(now);
-  const b=Math.floor(now/420)%2===0;if(b!==blinkOn){blinkOn=b;stage.classList.toggle('blink',b)}
+  if(mq&&mq.connected&&room&&!FOLLOW&&now-lastPub>200){lastPub=now;try{mq.publish('moped-ar-view/'+room+'/state',JSON.stringify(snap()))}catch(e){}}
+  const b=Math.floor(now/420)%2===0;if(b!==blinkOn){blinkOn=b;stage.classList.toggle('blink',b);$('phone').classList.toggle('blink',b)}
   requestAnimationFrame(tick);
 }
-st=fresh();try{G=make3d()}catch(e){G=null}if(!G)$('gl').hidden=true;resize();render();live();draw();
-if(FOLLOW){
-  document.documentElement.classList.add('display');$('wait').hidden=false;resize();draw();
-  if(chan)chan.onmessage=e=>{const m=e.data;if(!m||!m.st)return;st=m.st;walk=m.walk;
-    $('toast').hidden=m.toast[0];$('toastText').textContent=m.toast[1];$('alert').hidden=m.alert;
-    $('tk').hidden=m.tk[0];$('tk').classList.toggle('soft',m.tk[1]);$('tkTitle').textContent=m.tk[2];$('tkSub').textContent=m.tk[3];
-    $('wait').hidden=true;render();live();draw()};
+st=fresh();try{G=PHONE?null:make3d()}catch(e){G=null}if(!G)$('gl').hidden=true;resize();render();live();draw();
+if(DISPLAY){document.documentElement.classList.add('display');$('wait').hidden=false;resize();draw()}
+if(PHONE){
+  document.documentElement.classList.add('phone-mode');$('phoneWrap').hidden=false;phoneDraw();
+  const code=(HASH.split('-')[1]||'').toUpperCase();if(code){$('joinForm').hidden=true;remote(code,false)}
+  $('joinForm').addEventListener('submit',e=>{e.preventDefault();const c=$('joinCode').value.trim().toUpperCase();if(c)location.hash='#phone-'+c});
 }
+if(FOLLOW&&chan)chan.onmessage=e=>apply(e.data);
 window.addEventListener('hashchange',()=>location.reload());
 new ResizeObserver(()=>{resize();draw()}).observe(stage);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);
