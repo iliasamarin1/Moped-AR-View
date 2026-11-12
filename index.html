@@ -40,6 +40,14 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 .testbar .tb-state.live .dot{background:#1d8a4c}
 .tb-note{flex-basis:100%;font-size:12px;opacity:.75}
 
+/* participant screen (#display): AR view only, driven by the controller window */
+.display .testbar,.display .wheel,.display .cowl{display:none}
+.display .stage{cursor:none}
+.testbar a.open{font-weight:700;min-height:36px;padding:6px 14px;border-radius:8px;border:1.5px solid var(--bar-ink);background:var(--bar-ink);color:#fff;
+  text-decoration:none;display:inline-flex;align-items:center}
+.testbar a.open:focus-visible{outline:3px solid #0b6f8f;outline-offset:2px}
+.wait{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);padding:14px 20px;font-size:18px;color:#fff;text-align:center;max-width:80%}
+
 /* stage */
 .stage{position:relative;flex:1;min-height:0;overflow:clip;background:#9cc4dd;--D:420px}
 #scene,#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -157,6 +165,7 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
     <button id="btnBL" type="button">Blind spot left</button>
     <button id="btnBR" type="button">Blind spot right</button>
     <button id="btnReset" type="button">Reset demo</button>
+    <a class="open" id="lnkDisplay" href="#display" target="_blank" rel="noopener">Open participant screen</a>
     <span class="tb-state" id="tbState"><span class="dot"></span><span id="simState">Paused at start</span></span>
   </header>
 
@@ -208,6 +217,7 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
       </div>
     </div>
 
+    <div class="plate wait" id="wait" hidden>Waiting for the controller window. Open this page without "#display" in another window of the same browser.</div>
     <div class="cowl"></div>
 
     <svg class="wheel" id="wheel" viewBox="0 0 600 600" role="group" aria-label="Steering wheel controls">
@@ -302,6 +312,14 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 const $=id=>document.getElementById(id);
 const stage=$('stage'),cv=$('scene'),ctx=cv.getContext('2d'),wheel=$('wheel');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Wizard-of-Oz split: the normal page is the controller; the same page with #display is the participant screen.
+const FOLLOW=location.hash==='#display';
+let chan=null,lastSend=0;try{chan=new BroadcastChannel('moped-ar-view')}catch(e){}
+function send(now){
+  if(!chan||FOLLOW||!st)return;lastSend=now||performance.now();
+  try{chan.postMessage({st,walk,toast:[$('toast').hidden,$('toastText').textContent],alert:$('alert').hidden,
+    tk:[$('tk').hidden,$('tk').classList.contains('soft'),$('tkTitle').textContent,$('tkSub').textContent]})}catch(e){}
+}
 const SEGS=[{len:100,end:'left'},{len:220,end:'right'},{len:180,end:'arrive'}];
 const PACE=.5,CRUISE=15,CAM_H=4.2,ZN=3.5,ZF=900,TURN_S=2.4;
 const C={skyTop:'#7fb4d8',skyLow:'#d7e8ee',lawnFar:'#9db98a',lawn:'#7fa56b',road:'#8b8f92',walk:'#c9c7bf',curb:'#dcdad2',
@@ -321,9 +339,9 @@ function resize(){
   const r=stage.getBoundingClientRect();W=r.width;H=r.height;
   const dpr=Math.min(window.devicePixelRatio||1,2);
   cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
-  const tall=H>W,D=clamp(Math.min(W*.92,H*.46),220,560);
+  const tall=H>W,D=FOLLOW?H*.1:clamp(Math.min(W*.92,H*.46),220,560);
   stage.style.setProperty('--D',D+'px');
-  f=.7*Math.max(W,.8*H);y0=H*(tall?.3:.26);
+  f=.7*Math.max(W,.8*H);y0=H*(FOLLOW?.36:tall?.3:.26);
   if(G)G.resize();
 }
 
@@ -501,10 +519,12 @@ function render(){
   $('btnRun').disabled=st.arrived;
   $('simState').textContent=st.arrived?'Arrived':st.running?'Riding':st.started?'Paused':'Paused at start';
   $('tbState').classList.toggle('live',st.running);
+  send();
 }
 function toast(msg){
   $('toastText').textContent=msg;$('toast').hidden=false;$('live').textContent=msg;
-  clearTimeout(toastTimer);toastTimer=setTimeout(()=>{$('toast').hidden=true},4500);
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>{$('toast').hidden=true;send()},4500);
+  send();
 }
 
 /* ---------- controls ---------- */
@@ -583,7 +603,7 @@ function bind(id,fn){const el=$(id);
 const act={ArrowLeft:bind('padL',()=>signal('left')),ArrowRight:bind('padR',()=>signal('right')),h:bind('btnHazard',hazard),a:bind('btnAssist',assist)};
 bind('btnHorn',horn);
 $('btnRun').addEventListener('click',run);$('btnPed').addEventListener('click',ped);$('btnObs').addEventListener('click',obs);$('btnBL').addEventListener('click',()=>blind('left'));$('btnBR').addEventListener('click',()=>blind('right'));$('grips').addEventListener('click',takeover);$('btnReset').addEventListener('click',reset);
-document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.length===1?e.key.toLowerCase():e.key;
+document.addEventListener('keydown',e=>{if(FOLLOW||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(act[k]){e.preventDefault();act[k]()}});
 
 /* ---------- 3D street (falls back to the flat drawing above if WebGL is unavailable) ---------- */
@@ -731,11 +751,19 @@ function make3d(){
 }
 function tick(now){
   const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
-  if(st.running){step(dt);live();draw()}
+  if(st.running&&!FOLLOW){step(dt);live();draw();send(now)}else if(now-lastSend>250)send(now);
   const b=Math.floor(now/420)%2===0;if(b!==blinkOn){blinkOn=b;stage.classList.toggle('blink',b)}
   requestAnimationFrame(tick);
 }
 st=fresh();try{G=make3d()}catch(e){G=null}if(!G)$('gl').hidden=true;resize();render();live();draw();
+if(FOLLOW){
+  document.documentElement.classList.add('display');$('wait').hidden=false;resize();draw();
+  if(chan)chan.onmessage=e=>{const m=e.data;if(!m||!m.st)return;st=m.st;walk=m.walk;
+    $('toast').hidden=m.toast[0];$('toastText').textContent=m.toast[1];$('alert').hidden=m.alert;
+    $('tk').hidden=m.tk[0];$('tk').classList.toggle('soft',m.tk[1]);$('tkTitle').textContent=m.tk[2];$('tkSub').textContent=m.tk[3];
+    $('wait').hidden=true;render();live();draw()};
+}
+window.addEventListener('hashchange',()=>location.reload());
 new ResizeObserver(()=>{resize();draw()}).observe(stage);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);
 requestAnimationFrame(tick);
