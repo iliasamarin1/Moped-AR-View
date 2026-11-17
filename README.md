@@ -24,7 +24,14 @@ The same address serves three screens. Open the plain address first; it is the c
 
 **On one computer (laptop plus monitor or projector):** click **Open participant screen** and **Open phone screen** on the controller, then drag those windows where you need them. All windows must be in the same browser.
 
-**On a real phone:** click **Connect a real phone** on the controller. It shows an address ending in `#phone-` and a five-character code. Open that address on the phone, or open the `#phone` address and type the code. Both devices need internet access. The ride state is relayed through a public message broker (broker.hivemq.com) under that random code; nothing personal is sent.
+**On separate devices (controller laptop, participant laptop, phone):**
+
+1. On the controller laptop, open the plain address and click **Connect other devices**. The bar shows a five-character code and two addresses.
+2. On the participant laptop, open the address ending in `#display-CODE` (or open `#display` and type the code). Make it full screen and click once anywhere so the browser allows sound.
+3. On the phone, open the address ending in `#phone-CODE` (or open `#phone` and type the code).
+4. The controller bar says "Participant laptop connected. Phone connected." when both are linked.
+
+All three devices need internet access. The ride state is relayed through a public message broker (broker.hivemq.com, secure WebSocket on port 8884) under that random code; nothing personal is sent. Sounds (beeps, horn) play on the participant laptop while it is linked, and the controller stays quiet. The controller remembers its code, so reloading it reconnects to the same devices. To use a different broker, add `?broker=wss://host:port/path` to every device's address.
 
 Keyboard shortcuts on the controller: left and right arrows for blinkers, hold up arrow for gas and down arrow for brake, H hazard, B horn, A AUTO, G rider took over, S start or pause, P pedestrian, T obstacle, Q and E blind spots.
 

@@ -146,7 +146,11 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 .testbar a.open{font-weight:700;min-height:36px;padding:6px 14px;border-radius:8px;border:1.5px solid var(--bar-ink);background:var(--bar-ink);color:#fff;
   text-decoration:none;display:inline-flex;align-items:center}
 .testbar a.open:focus-visible{outline:3px solid #0b6f8f;outline-offset:2px}
-.wait{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);padding:14px 20px;font-size:18px;color:#fff;text-align:center;max-width:80%}
+.wait{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);padding:14px 20px;font-size:18px;color:#fff;text-align:center;max-width:80%;cursor:auto}
+.wait form{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.wait input{font:inherit;font-size:18px;width:6.5em;padding:6px 10px;border-radius:8px;border:1px solid #9aa39f;background:#0e1413;color:#fff;text-transform:uppercase}
+.wait button{font:inherit;font-size:16px;padding:6px 16px;border-radius:8px;border:1.5px solid #fff;background:none;color:#fff;cursor:pointer}
+.soundtip{position:absolute;right:16px;bottom:16px;padding:8px 14px;font-size:15px;color:#fff;cursor:auto}
 
 /* stage */
 .stage{position:relative;flex:1;min-height:0;overflow:clip;background:#9cc4dd;--D:420px}
@@ -263,9 +267,9 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
     <span class="tb-links">
       <a class="open" href="#display" target="_blank" rel="noopener">Open participant screen</a>
       <a class="open" href="#phone" target="_blank" rel="noopener">Open phone screen</a>
-      <button id="btnRemote" type="button">Connect a real phone</button>
+      <button id="btnRemote" type="button">Connect other devices</button>
     </span>
-    <div class="remote" id="remoteBox" hidden>On the phone, open <b id="remoteUrl"></b> &nbsp; <span id="remoteState"></span></div>
+    <div class="remote" id="remoteBox" hidden>Code <b id="remoteCode"></b> &nbsp;&middot;&nbsp; Participant laptop: <b id="remoteDisp"></b> &nbsp;&middot;&nbsp; Phone: <b id="remotePhone"></b> &nbsp;&middot;&nbsp; <span id="remoteState"></span></div>
   </header>
 
   <div class="work">
@@ -317,7 +321,9 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
       </div>
     </div>
 
-    <div class="plate wait" id="wait" hidden>Waiting for the controller window. Open this page without "#display" in another window of the same browser.</div>
+    <div class="plate wait" id="wait" hidden><span id="waitText">Waiting for the controller. Type the code shown on the controller laptop, or open the controller in another window of this browser.</span>
+      <form id="dJoinForm"><input id="dJoinCode" maxlength="6" placeholder="Code" aria-label="Code from the controller" autocomplete="off"><button type="submit">Join</button></form></div>
+    <div class="plate soundtip" id="soundTip" hidden>Click anywhere on this screen once to turn on sound.</div>
     <div class="offtag" id="offTag" hidden>Rider's display is off</div>
     <div class="cowl"></div>
 
@@ -461,7 +467,7 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
     </svg></div>
     <div class="ph-sig"><span id="phL"><svg viewBox="0 0 32 32"><polygon class="lamp" points="3,16 16,4 16,11 29,11 29,21 16,21 16,28"/></svg></span><span id="phSigText"></span><span id="phR"><svg viewBox="0 0 32 32"><polygon class="lamp" points="29,16 16,4 16,11 3,11 3,21 16,21 16,28"/></svg></span></div>
     <div class="ph-conn"><span id="phConnText">Waiting for the controller.</span>
-      <form id="joinForm"><input id="joinCode" maxlength="6" placeholder="Phone code" aria-label="Phone code from the controller" autocomplete="off"><button type="submit">Join</button></form></div>
+      <form id="joinForm"><input id="joinCode" maxlength="6" placeholder="Code" aria-label="Code from the controller" autocomplete="off"><button type="submit">Join</button></form></div>
   </div></div>
 </div>
 
@@ -472,7 +478,7 @@ const $=id=>document.getElementById(id);
 const stage=$('stage'),cv=$('scene'),ctx=cv.getContext('2d'),wheel=$('wheel');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Wizard-of-Oz split: the normal page is the controller; the same page with #display is the participant screen.
-const HASH=location.hash,PHONE=/^#phone/.test(HASH),DISPLAY=HASH==='#display',FOLLOW=PHONE||DISPLAY;
+const HASH=location.hash,PHONE=/^#phone/.test(HASH),DISPLAY=/^#display/.test(HASH),FOLLOW=PHONE||DISPLAY;
 let chan=null,lastSend=0;try{chan=new BroadcastChannel('moped-ar-view')}catch(e){}
 function snap(){return{st,walk,toast:[$('toast').hidden,$('toastText').textContent],alert:$('alert').hidden,
   tk:[$('tk').hidden,$('tk').classList.contains('soft'),$('tkTitle').textContent,$('tkSub').textContent]}}
@@ -482,16 +488,29 @@ function send(now){
 }
 // Optional link to a real phone on another device, relayed through a public message broker under a random room code.
 const BROKER=new URLSearchParams(location.search).get('broker')||'wss://broker.hivemq.com:8884/mqtt';
-let mq=null,room='',lastPub=0;
-function remoteState(t){$(PHONE?'phConnText':'remoteState').textContent=t}
+let mq=null,room='',lastPub=0;const seen={};
+const ROLE=PHONE?'phone':DISPLAY?'display':'controller';
+function remoteState(t){$(PHONE?'phConnText':DISPLAY?'waitText':'remoteState').textContent=t}
+function hostStatus(){
+  const now=Date.now(),on=r=>seen[r]&&now-seen[r]<12000;
+  const parts=[on('display')?'Participant laptop connected':'Participant laptop not connected',on('phone')?'Phone connected':'Phone not connected'];
+  remoteState(parts.join('. ')+'.');
+}
+function remoteDisplay(){return !FOLLOW&&seen.display&&Date.now()-seen.display<12000}
 function remote(code,host){
-  room=code;remoteState('Connecting.');
+  room=code;remoteState('Connecting to code '+code+'.');
   const topic='moped-ar-view/'+code,go=()=>{try{
     mq=mqtt.connect(BROKER,{reconnectPeriod:3000,connectTimeout:10000});
-    mq.on('connect',()=>{remoteState(host?'Link ready. Waiting for the phone.':'Linked to controller '+code+'.');mq.subscribe(topic+(host?'/hello':'/state'));if(!host)mq.publish(topic+'/hello','1')});
+    mq.on('connect',()=>{
+      if(host){mq.subscribe(topic+'/hello');hostStatus()}
+      else{mq.subscribe(topic+'/state');if(DISPLAY)mq.subscribe(topic+'/sound');mq.publish(topic+'/hello',ROLE);
+        remoteState(DISPLAY?'Linked to code '+code+'. Waiting for the controller.':'Linked to controller '+code+'.')}});
     mq.on('offline',()=>remoteState('Link offline. Retrying.'));mq.on('error',()=>remoteState('Link error. Retrying.'));
-    mq.on('message',(t,p)=>{if(host){remoteState('Phone connected.');return}try{apply(JSON.parse(p.toString()))}catch(e){}});
-    if(!host)setInterval(()=>{if(mq.connected)mq.publish(topic+'/hello','1')},5000);
+    mq.on('message',(t,p)=>{
+      if(host){seen[p.toString()]=Date.now();hostStatus();return}
+      try{const m=JSON.parse(p.toString());if(t.endsWith('/sound'))playSnd(m);else apply(m)}catch(e){}});
+    if(host)setInterval(hostStatus,4000);
+    else setInterval(()=>{if(mq.connected)mq.publish(topic+'/hello',ROLE)},5000);
   }catch(e){remoteState('Link failed.')}};
   if(window.mqtt)return go();
   const sc=document.createElement('script');sc.src='https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js';sc.onload=go;
@@ -760,7 +779,8 @@ function assist(){
   st.assist=!st.assist;if(st.assist)st.cruise=CRUISE;
   toast(st.assist?'Assist active. Stay attentive. Steer or brake to take over.':'Manual riding. You are in full control.');render()}
 let ac;
-function tone(fr,dur){
+function tone(fr,dur){if(!remoteDisplay())playTone(fr,dur);emitSnd(['tone',fr,dur])}
+function playTone(fr,dur){
   try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const t=ac.currentTime,g=ac.createGain(),o=ac.createOscillator();
     g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.1,t+.02);g.gain.setValueAtTime(.1,t+dur-.04);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     o.frequency.value=fr;o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+dur+.02)}catch(e){}
@@ -796,11 +816,16 @@ function obs(){
 }
 function horn(){
   if(!need())return;
+  if(!remoteDisplay())playHorn();emitSnd(['horn']);
+  toast('Horn sounded.');
+}
+function playHorn(){
   try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const t=ac.currentTime,g=ac.createGain();
     g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.12,t+.02);g.gain.setValueAtTime(.12,t+.3);g.gain.exponentialRampToValueAtTime(.0001,t+.4);g.connect(ac.destination);
     [392,494].forEach(fr=>{const o=ac.createOscillator();o.type='square';o.frequency.value=fr;o.connect(g);o.start(t);o.stop(t+.42)})}catch(e){}
-  toast('Horn sounded.');
 }
+function playSnd(a){if(a[0]==='horn')playHorn();else playTone(a[1],a[2])}
+function emitSnd(a){if(FOLLOW||!mq||!mq.connected||!room)return;try{mq.publish('moped-ar-view/'+room+'/sound',JSON.stringify(a))}catch(e){}}
 function run(){
   if(!need())return;if(st.arrived)return;st.running=!st.running;st.started=true;last=0;
   note(st.running?'Journey running.':'Journey paused.');render()}
@@ -872,9 +897,17 @@ const sl=$('steer');sl.addEventListener('input',()=>setSteer(sl.value/100));
   document.addEventListener('keydown',e=>{if(!FOLLOW&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&e.key.toLowerCase()===a[0]&&!/^(INPUT|TEXTAREA)$/.test(e.target.tagName)){sl.value=a[1]*100;setSteer(a[1])}});
   document.addEventListener('keyup',e=>{if(e.key.toLowerCase()===a[0]){sl.value=0;setSteer(0)}})});
 Object.assign(act,{s:run,p:ped,t:obs,q:()=>blind('left'),e:()=>blind('right')});
+function link(c){
+  try{localStorage.setItem('mopedLinkCode',c)}catch(e){}
+  const base=location.host+location.pathname;
+  $('remoteBox').hidden=false;$('remoteCode').textContent=c;$('remoteDisp').textContent=base+'#display-'+c;$('remotePhone').textContent=base+'#phone-'+c;
+  $('btnRemote').disabled=true;remote(c,true);
+}
 $('btnRemote').addEventListener('click',()=>{
-  if(room)return;const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let c='';for(let i=0;i<5;i++)c+=A[Math.floor(Math.random()*A.length)];
-  $('remoteBox').hidden=false;$('remoteUrl').textContent=location.host+location.pathname+'#phone-'+c;remote(c,true);note('Phone link started with code '+c+'.')});
+  if(room)return;let c='';try{c=localStorage.getItem('mopedLinkCode')||''}catch(e){}
+  if(!c){const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';for(let i=0;i<5;i++)c+=A[Math.floor(Math.random()*A.length)]}
+  link(c);note('Device link started with code '+c+'.')});
+if(!FOLLOW){let c='';try{c=localStorage.getItem('mopedLinkCode')||''}catch(e){}if(c)link(c)}
 document.addEventListener('keydown',e=>{if(FOLLOW||e.ctrlKey||e.metaKey||e.altKey||/^(INPUT|TEXTAREA)$/.test(e.target.tagName))return;const k=e.key.length===1?e.key.toLowerCase():e.key;
   if(act[k]){e.preventDefault();act[k]()}});
 
@@ -1031,7 +1064,13 @@ function tick(now){
   requestAnimationFrame(tick);
 }
 st=fresh();try{G=PHONE?null:make3d()}catch(e){G=null}if(!G)$('gl').hidden=true;resize();render();live();draw();
-if(DISPLAY){document.documentElement.classList.add('display');$('wait').hidden=false;resize();draw()}
+if(DISPLAY){
+  document.documentElement.classList.add('display');$('wait').hidden=false;resize();draw();
+  const code=(HASH.split('-')[1]||'').toUpperCase();
+  if(code){$('dJoinForm').hidden=true;remote(code,false);$('soundTip').hidden=false;
+    document.addEventListener('pointerdown',()=>{try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume()}catch(e){}$('soundTip').hidden=true},{once:true})}
+  $('dJoinForm').addEventListener('submit',e=>{e.preventDefault();const c=$('dJoinCode').value.trim().toUpperCase();if(c)location.hash='#display-'+c});
+}
 if(PHONE){
   document.documentElement.classList.add('phone-mode');$('phoneWrap').hidden=false;phoneDraw();
   const code=(HASH.split('-')[1]||'').toUpperCase();if(code){$('joinForm').hidden=true;remote(code,false)}
