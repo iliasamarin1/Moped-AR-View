@@ -480,37 +480,82 @@ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 // Wizard-of-Oz split: the normal page is the controller; the same page with #display is the participant screen.
 const HASH=location.hash,PHONE=/^#phone/.test(HASH),DISPLAY=/^#display/.test(HASH),FOLLOW=PHONE||DISPLAY;
 let chan=null,lastSend=0;try{chan=new BroadcastChannel('moped-ar-view')}catch(e){}
-function snap(){return{st,walk,toast:[$('toast').hidden,$('toastText').textContent],alert:$('alert').hidden,
+function snap(){return{t:Date.now(),seq:++seq,boot:BOOT,st,walk,toast:[$('toast').hidden,$('toastText').textContent],alert:$('alert').hidden,
   tk:[$('tk').hidden,$('tk').classList.contains('soft'),$('tkTitle').textContent,$('tkSub').textContent]}}
 function send(now){
-  if(!chan||FOLLOW||!st)return;lastSend=now||performance.now();
-  try{chan.postMessage(snap())}catch(e){}
+  if(FOLLOW||!st)return;lastSend=now||performance.now();
+  const m=snap(),j=JSON.stringify(m);
+  try{chan&&chan.postMessage(m)}catch(e){}
+  for(const id in peers){const p=peers[id];if(p.open&&p.dc.bufferedAmount<65536)try{p.dc.send(j)}catch(e){}}
+  if(mq&&mq.connected&&room){const t=performance.now();
+    if(t-lastPub>=120){lastPub=t;try{mq.publish(topicOf('/state'),j)}catch(e){}}
+    else if(!pubTimer)pubTimer=setTimeout(()=>{pubTimer=0;send()},120-(t-lastPub))}
 }
-// Optional link to a real phone on another device, relayed through a public message broker under a random room code.
 const BROKER=new URLSearchParams(location.search).get('broker')||'wss://broker.hivemq.com:8884/mqtt';
-let mq=null,room='',lastPub=0;const seen={};
+// Devices find each other through the broker, then open a direct WebRTC link (low latency on the same network).
+// The broker stays as a slower fallback when a direct link cannot be made.
+const ICE={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+let mq=null,room='',lastPub=0,pubTimer=0,seq=0,p2p=false,fpc=null,iceQ=[];const seen={},peers={};
+const BOOT=Math.random().toString(36).slice(2,9),MYID=Math.random().toString(36).slice(2,10);
 const ROLE=PHONE?'phone':DISPLAY?'display':'controller';
+function topicOf(x){return 'moped-ar-view/'+room+x}
+function pub(t,o){try{if(mq&&mq.connected)mq.publish(topicOf(t),JSON.stringify(o))}catch(e){}}
 function remoteState(t){$(PHONE?'phConnText':DISPLAY?'waitText':'remoteState').textContent=t}
+function direct(r){return Object.values(peers).some(p=>p.role===r&&p.open)}
 function hostStatus(){
   const now=Date.now(),on=r=>seen[r]&&now-seen[r]<12000;
-  const parts=[on('display')?'Participant laptop connected':'Participant laptop not connected',on('phone')?'Phone connected':'Phone not connected'];
-  remoteState(parts.join('. ')+'.');
+  const lab=(r,n)=>direct(r)?n+' connected directly':on(r)?n+' connected through the internet relay (slower)':n+' not connected';
+  remoteState(lab('display','Participant laptop')+'. '+lab('phone','Phone')+'.');
 }
-function remoteDisplay(){return !FOLLOW&&seen.display&&Date.now()-seen.display<12000}
+function remoteDisplay(){return !FOLLOW&&(direct('display')||(seen.display&&Date.now()-seen.display<12000))}
+async function startPeer(id,role){
+  const old=peers[id];if(old)try{old.pc.close()}catch(e){}
+  if(!window.RTCPeerConnection)return;
+  const pc=new RTCPeerConnection(ICE),dc=pc.createDataChannel('ride'),p={pc,dc,role,open:false,t:Date.now()};peers[id]=p;
+  dc.onopen=()=>{p.open=true;try{dc.send(JSON.stringify(snap()))}catch(e){}hostStatus()};
+  dc.onclose=()=>{p.open=false;hostStatus()};
+  pc.onicecandidate=e=>{if(e.candidate)pub('/sig/'+id,{ice:e.candidate})};
+  pc.onconnectionstatechange=()=>{if(/failed|closed/.test(pc.connectionState)){p.open=false;hostStatus()}};
+  try{await pc.setLocalDescription(await pc.createOffer());pub('/sig/'+id,{sdp:pc.localDescription})}catch(e){}
+}
+function hostSignal(m){const p=peers[m.from];if(!p)return;try{if(m.sdp)p.pc.setRemoteDescription(m.sdp).catch(()=>{});else if(m.ice)p.pc.addIceCandidate(m.ice).catch(()=>{})}catch(e){}}
+async function followSignal(m){
+  try{
+    if(m.sdp&&m.sdp.type==='offer'){
+      if(fpc)try{fpc.close()}catch(e){}
+      p2p=false;iceQ=[];const pc=fpc=new RTCPeerConnection(ICE);
+      pc.onicecandidate=e=>{if(e.candidate)pub('/sig-host',{from:MYID,ice:e.candidate})};
+      pc.ondatachannel=e=>{const dc=e.channel;
+        dc.onopen=()=>{p2p=true;remoteState('Linked directly to controller '+room+'.')};
+        dc.onclose=()=>{if(pc===fpc){p2p=false;remoteState('Linked to controller '+room+' through the internet relay.')}};
+        dc.onmessage=ev=>{try{incoming(JSON.parse(ev.data))}catch(e){}}};
+      pc.onconnectionstatechange=()=>{if(pc===fpc&&/failed|closed|disconnected/.test(pc.connectionState))p2p=false};
+      await pc.setRemoteDescription(m.sdp);for(const c of iceQ)await pc.addIceCandidate(c).catch(()=>{});iceQ=[];
+      await pc.setLocalDescription(await pc.createAnswer());pub('/sig-host',{from:MYID,sdp:pc.localDescription});
+    }else if(m.ice){if(fpc&&fpc.remoteDescription)await fpc.addIceCandidate(m.ice).catch(()=>{});else iceQ.push(m.ice)}
+  }catch(e){}
+}
+function incoming(m){if(m&&m.snd){if(DISPLAY)playSnd(m.snd)}else apply(m)}
 function remote(code,host){
   room=code;remoteState('Connecting to code '+code+'.');
-  const topic='moped-ar-view/'+code,go=()=>{try{
+  const go=()=>{try{
     mq=mqtt.connect(BROKER,{reconnectPeriod:3000,connectTimeout:10000});
+    const hello=()=>pub('/hello',{role:ROLE,id:MYID});
     mq.on('connect',()=>{
-      if(host){mq.subscribe(topic+'/hello');hostStatus()}
-      else{mq.subscribe(topic+'/state');if(DISPLAY)mq.subscribe(topic+'/sound');mq.publish(topic+'/hello',ROLE);
-        remoteState(DISPLAY?'Linked to code '+code+'. Waiting for the controller.':'Linked to controller '+code+'.')}});
-    mq.on('offline',()=>remoteState('Link offline. Retrying.'));mq.on('error',()=>remoteState('Link error. Retrying.'));
-    mq.on('message',(t,p)=>{
-      if(host){seen[p.toString()]=Date.now();hostStatus();return}
-      try{const m=JSON.parse(p.toString());if(t.endsWith('/sound'))playSnd(m);else apply(m)}catch(e){}});
-    if(host)setInterval(hostStatus,4000);
-    else setInterval(()=>{if(mq.connected)mq.publish(topic+'/hello',ROLE)},5000);
+      if(host){mq.subscribe(topicOf('/hello'));mq.subscribe(topicOf('/sig-host'));hostStatus()}
+      else{mq.subscribe(topicOf('/state'));mq.subscribe(topicOf('/sig/'+MYID));if(DISPLAY)mq.subscribe(topicOf('/sound'));hello();
+        if(!p2p)remoteState(DISPLAY?'Linked to code '+code+'. Waiting for the controller.':'Linked to controller '+code+'.')}});
+    mq.on('offline',()=>{if(!p2p)remoteState('Link offline. Retrying.')});mq.on('error',()=>{if(!p2p)remoteState('Link error. Retrying.')});
+    mq.on('message',(t,pl)=>{let m;try{m=JSON.parse(pl.toString())}catch(e){m=pl.toString()}
+      if(host){
+        if(t.endsWith('/sig-host'))return hostSignal(m);
+        const role=typeof m==='string'?m:m.role;seen[role]=Date.now();
+        if(m&&m.id){const pr=peers[m.id];if(!pr||(!pr.open&&Date.now()-pr.t>10000))startPeer(m.id,role)}
+        hostStatus();return}
+      if(t.indexOf('/sig/')>0)return followSignal(m);
+      if(p2p)return;
+      incoming(t.endsWith('/sound')?{snd:m}:m)});
+    if(host)setInterval(hostStatus,4000);else setInterval(()=>{if(mq.connected)hello()},4000);
   }catch(e){remoteState('Link failed.')}};
   if(window.mqtt)return go();
   const sc=document.createElement('script');sc.src='https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js';sc.onload=go;
@@ -751,8 +796,22 @@ function phoneDraw(){
   $('phSigText').textContent=st.hazard?'Hazard on':st.left?'Left blinker on':st.right?'Right blinker on':'';
   const r=RT[st.seg],z=Math.min(st.z,SEGS[st.seg].len);$('phDot').setAttribute('cx',r.x+r.hx*z);$('phDot').setAttribute('cy',r.y+r.hy*z);
 }
+// Followers keep moving between updates, so the view stays smooth whatever the network does.
+function predict(dt){
+  if(!st||!st.running||!st.power||!(dt>0))return;
+  const dz=st.speed*1.4667*PACE*dt,seg=SEGS[st.seg];walk+=dt;
+  if(st.turn)st.turn.t=Math.min(1,st.turn.t+dt/TURN_S);
+  st.z=seg.end==='arrive'?Math.min(st.z+dz,seg.len):st.turn?st.z+dz:Math.min(st.z+dz,seg.len+1);
+  if(st.ped){st.ped.d-=dz;st.ped.x-=4.2*dt}
+  if(st.obs)st.obs.d-=dz;
+  if(st.turnIn&&!st.turn)st.lat=clamp(st.lat+st.turnIn*dz*.6,-13,4);
+}
+let lastSeq=0,lastBoot='',minD=1e12,gotState=false;
 function apply(m){
-  if(!m||!m.st)return;st=m.st;walk=m.walk;
+  if(!m||!m.st)return;
+  if(m.boot){if(m.boot===lastBoot&&m.seq<=lastSeq)return;lastBoot=m.boot;lastSeq=m.seq}
+  st=m.st;walk=m.walk;gotState=true;
+  if(m.t){const d=Date.now()-m.t;minD=Math.min(d,minD+.5);predict(clamp((d-minD)/1000+.015,0,.3))}
   if(PHONE){if(!room)$('phConnText').textContent='Showing the live ride.';phoneDraw();return}
   $('toast').hidden=m.toast[0];$('toastText').textContent=m.toast[1];$('alert').hidden=m.alert;
   $('tk').hidden=m.tk[0];$('tk').classList.toggle('soft',m.tk[1]);$('tkTitle').textContent=m.tk[2];$('tkSub').textContent=m.tk[3];
@@ -825,7 +884,9 @@ function playHorn(){
     [392,494].forEach(fr=>{const o=ac.createOscillator();o.type='square';o.frequency.value=fr;o.connect(g);o.start(t);o.stop(t+.42)})}catch(e){}
 }
 function playSnd(a){if(a[0]==='horn')playHorn();else playTone(a[1],a[2])}
-function emitSnd(a){if(FOLLOW||!mq||!mq.connected||!room)return;try{mq.publish('moped-ar-view/'+room+'/sound',JSON.stringify(a))}catch(e){}}
+function emitSnd(a){if(FOLLOW)return;const j=JSON.stringify({snd:a});
+  for(const id in peers){const p=peers[id];if(p.open&&p.role==='display')try{p.dc.send(j)}catch(e){}}
+  if(mq&&mq.connected&&room)try{mq.publish(topicOf('/sound'),JSON.stringify(a))}catch(e){}}
 function run(){
   if(!need())return;if(st.arrived)return;st.running=!st.running;st.started=true;last=0;
   note(st.running?'Journey running.':'Journey paused.');render()}
@@ -1058,8 +1119,8 @@ function make3d(){
 }
 function tick(now){
   const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
-  if(st.running&&!FOLLOW){step(dt);live();draw();send(now)}else if(now-lastSend>250)send(now);
-  if(mq&&mq.connected&&room&&!FOLLOW&&now-lastPub>200){lastPub=now;try{mq.publish('moped-ar-view/'+room+'/state',JSON.stringify(snap()))}catch(e){}}
+  if(!FOLLOW){if(st.running){step(dt);live();draw();send(now)}else if(now-lastSend>250)send(now)}
+  else if(gotState&&st.running&&st.power){predict(dt);if(PHONE)phoneDraw();else{live();draw()}}
   const b=Math.floor(now/420)%2===0;if(b!==blinkOn){blinkOn=b;document.documentElement.classList.toggle('blink',b)}
   requestAnimationFrame(tick);
 }
@@ -1076,7 +1137,8 @@ if(PHONE){
   const code=(HASH.split('-')[1]||'').toUpperCase();if(code){$('joinForm').hidden=true;remote(code,false)}
   $('joinForm').addEventListener('submit',e=>{e.preventDefault();const c=$('joinCode').value.trim().toUpperCase();if(c)location.hash='#phone-'+c});
 }
-if(FOLLOW&&chan)chan.onmessage=e=>apply(e.data);
+if(FOLLOW&&chan)chan.onmessage=e=>incoming(e.data);
+if(/[?&]debug/.test(location.search))window.__moped=()=>({st,p2p,peers:Object.keys(peers).length});
 window.addEventListener('hashchange',()=>location.reload());
 new ResizeObserver(()=>{resize();draw()}).observe(stage);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(draw);

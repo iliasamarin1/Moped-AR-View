@@ -31,6 +31,8 @@ The same address serves three screens. Open the plain address first; it is the c
 3. On the phone, open the address ending in `#phone-CODE` (or open `#phone` and type the code).
 4. The controller bar says "Participant laptop connected. Phone connected." when both are linked.
 
+**Latency.** After joining, the devices take a few seconds to set up a direct link to the controller, and the controller bar then says "connected directly". Over a direct link, presses reach the participant screen in a few milliseconds plus the local network. If a direct link cannot be made (some campus Wi-Fi blocks devices from talking to each other), the bar says "through the internet relay (slower)": motion stays smooth, but presses can take a few hundred milliseconds. Putting all devices on the same phone hotspot usually allows the direct link.
+
 All three devices need internet access. The ride state is relayed through a public message broker (broker.hivemq.com, secure WebSocket on port 8884) under that random code; nothing personal is sent. Sounds (beeps, horn) play on the participant laptop while it is linked, and the controller stays quiet. The controller remembers its code, so reloading it reconnects to the same devices. To use a different broker, add `?broker=wss://host:port/path` to every device's address.
 
 Keyboard shortcuts on the controller: left and right arrows for blinkers, hold up arrow for gas and down arrow for brake, H hazard, B horn, A AUTO, G rider took over, S start or pause, P pedestrian, T obstacle, Q and E blind spots.
