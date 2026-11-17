@@ -84,9 +84,17 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 #btnPower.on .face{fill:#fff;stroke:#12a05a}
 #btnPower.on .pw{stroke:#12a05a}
 #wheel.off #miniScreen{opacity:.12}
+#wheel.auto #miniBg{stroke:var(--signal);stroke-width:4}
 .stage.off .hud,.stage.off .blind,.stage.off .blind-tag{display:none}
 .offtag{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:var(--plate);color:#fff;font-size:14px}
 .display .offtag{display:none}
+.phone{position:relative}
+.phone::after{content:"";position:absolute;inset:0;border-radius:28px;pointer-events:none;opacity:0;transition:opacity .4s;
+  box-shadow:inset 0 0 0 .7cqh var(--signal),inset 0 0 7cqh rgba(87,227,137,.55)}
+.phone.auto::after{opacity:1}
+.phone.auto{box-shadow:0 0 22px 4px rgba(87,227,137,.55)}
+@media (max-width:520px){.phone::after{border-radius:0}}
+@media (prefers-reduced-motion:reduce){.phone::after{transition:none}}
 .phone.off{background:#000}
 .phone.off .ph>*:not(.ph-conn){visibility:hidden}
 .limit.over b{background:var(--warn);color:#2a0b07}
@@ -402,7 +410,7 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 
         <!-- phone mounted in the centre, vertical -->
         <rect x="246" y="206" width="108" height="188" rx="17" fill="#050707" stroke="#4d524f" stroke-width="2"/>
-        <rect x="253" y="213" width="94" height="174" rx="11" fill="var(--screen)"/>
+        <rect id="miniBg" x="253" y="213" width="94" height="174" rx="11" fill="var(--screen)"/>
         <g fill="#fff" id="miniScreen">
           <rect x="262" y="223" width="22" height="12" rx="3" fill="none" stroke="#fff" stroke-width="1.6"/>
           <rect x="284.5" y="226" width="3" height="6" rx="1"/>
@@ -690,7 +698,7 @@ function render(){
   $('simState').textContent=!st.power?'Powered off':st.arrived?'Arrived':st.running?'Riding':st.started?'Paused':'Paused at start';
   $('tbState').classList.toggle('live',st.running);
   [['pBrake',st.brake],['pGas',st.gas],['btnPed',!!st.ped],['btnObs',!!st.obs],['btnBL',st.blind.left>0],['btnBR',st.blind.right>0]].forEach(a=>$(a[0]).setAttribute('aria-pressed',!!a[1]));
-  stage.classList.toggle('off',!st.power);wheel.classList.toggle('off',!st.power);$('offTag').hidden=st.power;
+  stage.classList.toggle('off',!st.power);wheel.classList.toggle('off',!st.power);wheel.classList.toggle('auto',st.assist&&!pend&&st.power);$('offTag').hidden=st.power;
   $('btnPower').classList.toggle('on',st.power);$('btnPower').setAttribute('aria-pressed',st.power);$('pPower').setAttribute('aria-pressed',st.power);$('pwrText').textContent=st.power?'Power is on':'Power is off';
   $('dispMode').textContent=pend?'TAKE OVER':st.assist?'Assist active':'Manual';$('wTake').classList.toggle('call',pend);
   send();
@@ -713,7 +721,7 @@ function phoneDraw(){
   $('phNavIcon').innerHTML=ICON[n[0]];$('phNavLabel').textContent=k<0?n[1]:n[1].slice(0,k+3);$('phNavDist').textContent=k<0?'':n[1].slice(k+4);
   $('phSpeed').textContent=Math.round(st.speed);$('phLimit').classList.toggle('over',Math.round(st.speed)>25);
   m.textContent=pend?'Take over':st.assist?'Assist active':'Manual';m.classList.toggle('on',st.assist&&!pend);m.classList.toggle('alarm',pend);
-  $('phone').classList.toggle('take',pend);$('phone').classList.toggle('off',!st.power);
+  $('phone').classList.toggle('take',pend);$('phone').classList.toggle('off',!st.power);$('phone').classList.toggle('auto',st.assist&&!pend&&st.power);
   let a='',c='warn';
   if(o&&o.phase==='request'){a='Take over now';c='danger'}else if(o&&o.phase==='stopped'){a='Stopping safely';c='danger'}
   else if(o&&!o.passed)a='Obstacle ahead';else if(st.ped&&st.ped.active)a='Pedestrian ahead';
