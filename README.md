@@ -41,7 +41,7 @@ Keyboard shortcuts on the controller: left and right arrows for blinkers, hold u
 
 Power: the button on the steering column below the wheel (or O) switches the moped on and off. When it is off the rider's AR display and phone go dark and every other control is ignored. The moped must be stopped before it can be switched off.
 
-Steering: drag the slider under the wheel (or hold Z or X for full lock) to turn the wheel, up to half a turn each way. The rider's view swings and the moped drifts across the lane while it is moving; the slider springs back when released. Turns at junctions still happen automatically. Steering while AUTO is on switches to manual.
+Steering: drag the slider under the wheel (or hold Z or X for full lock) to turn the wheel, up to half a turn each way. The rider's view swings and the moped drifts across the lane while it is moving; the slider springs back when released. In manual mode the moped slows to a stop at each junction and waits until the wizard steers into the turn (hold the slider or Z/X toward the turn); the turn goes faster the harder you steer. With AUTO on, it takes the turns by itself. Steering while AUTO is on switches to manual.
 
 Pedals: holding gas speeds up (to 30 mph; the limit ring turns red above 25) and starts the journey if it has not started. Holding brake slows to a stop. Braking while AUTO is on switches to manual, and braking during a takeover request counts as taking over.
 

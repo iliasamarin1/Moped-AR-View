@@ -693,26 +693,32 @@ function step(dt){
   const seg=SEGS[st.seg],dist=seg.len-st.z;let target=st.cruise;
   if(st.turn)target=Math.min(target,8);
   else if(seg.end==='arrive'){if(dist<70)target=Math.min(target,Math.max(2.5,CRUISE*dist/70))}
-  else if(dist<45)target=Math.min(target,9);
+  else if(dist<45){target=Math.min(target,9);
+    if(!st.assist&&st.turnIn*(seg.end==='left'?-1:1)<.3)target=Math.min(target,Math.max(0,dist*.8));}
   if(st.ped&&st.ped.active){const d=st.ped.d;target=Math.min(target,d>56?6:d>42?3:0)}
   const o=st.obs;
   if(o){if(o.phase==='request')target=Math.min(target,8);else if(o.phase==='stopped')target=0;else if(o.d>-10&&o.d<70)target=Math.min(target,9)}
   const rate=st.speed>target?(st.brake?12:7):(st.gas?5:3.5);
   st.speed+=clamp(target-st.speed,-rate*dt,rate*dt);
   const dz=st.speed*1.4667*PACE*dt;st.z+=dz;walk+=dt;
+  if(!st.assist&&!st.turn&&seg.end!=='arrive'&&st.z>seg.len)st.z=seg.len;
   if(st.turnIn&&!st.turn)st.lat=clamp(st.lat+st.turnIn*dz*1.2,-16,4.5);
   ['left','right'].forEach(k=>{if(st.blind[k]>0){st.blind[k]-=dt;if(st.blind[k]<=0){st.blind[k]=0;toast((k==='left'?'Left':'Right')+' side clear.');render()}}});
   if(o)obstacle(o,dt,dz);
   if(st.ped){st.ped.d-=dz;st.ped.x-=4.2*dt;
     if(st.ped.active&&st.ped.x<-20){st.ped.active=false;$('alert').hidden=true;toast('Road clear.')}
     if(st.ped.x<-42||st.ped.d<5)st.ped=null}
-  if(st.turn){st.turn.t+=dt/TURN_S;
-    if(st.turn.t>=1){const dir=st.turn.dir;st.seg++;st.z=0;st.turn=null;wheel.style.transform='';
+  if(st.turn){st.turn.t+=dt/TURN_S*turnRate();
+    if(st.turn.t>=1){const dir=st.turn.dir;st.seg++;st.z=0;st.lat=0;st.turn=null;st.waitNoted=false;wheel.style.transform=st.turnIn?'rotate('+(st.turnIn*180)+'deg)':'';
       if(!st.hazard&&dir<0&&st.left){st.left=false;toast('Left signal turned off after the turn.')}
       else if(!st.hazard&&dir>0&&st.right){st.right=false;toast('Right signal turned off after the turn.')}
       render()}}
-  else if(seg.end!=='arrive'&&dist<=0){st.turn={t:0,dir:seg.end==='left'?-1:1};
+  else if(seg.end!=='arrive'&&st.assist&&dist<=0){st.turn={t:0,dir:seg.end==='left'?-1:1,lat0:st.lat};
     if(!reduce)wheel.style.transform='rotate('+(st.turn.dir*30)+'deg)'}
+  else if(seg.end!=='arrive'&&!st.assist&&dist<=3){
+    const dir=seg.end==='left'?-1:1;
+    if(st.turnIn*dir>=.3){st.turn={t:0,dir,manual:true,lat0:st.lat};logit('Rider steered into the '+seg.end+' turn.',true)}
+    else if(!st.waitNoted&&st.speed<1){st.waitNoted=true;note('Waiting at the junction. Steer '+seg.end+' to make the turn.')}}
   else if(seg.end==='arrive'&&dist<=0){st.speed=0;st.running=false;st.arrived=true;toast('You have arrived '+DEST[st.dest||'pharmacy'].at+'.');render()}
 }
 function obstacle(o,dt,dz){
@@ -800,11 +806,12 @@ function phoneDraw(){
   const r=RT[st.seg],z=Math.min(st.z,SEGS[st.seg].len);$('phDot').setAttribute('cx',r.x+r.hx*z);$('phDot').setAttribute('cy',r.y+r.hy*z);
 }
 // Followers keep moving between updates, so the view stays smooth whatever the network does.
+function turnRate(){if(!st.turn||!st.turn.manual)return 1;const k=st.turnIn*st.turn.dir;return k>.2?Math.min(1.5,.5+k):.35}
 function predict(dt){
   if(!st||!st.running||!st.power||!(dt>0))return;
   const dz=st.speed*1.4667*PACE*dt,seg=SEGS[st.seg];walk+=dt;
-  if(st.turn)st.turn.t=Math.min(1,st.turn.t+dt/TURN_S);
-  st.z=seg.end==='arrive'?Math.min(st.z+dz,seg.len):st.turn?st.z+dz:Math.min(st.z+dz,seg.len+1);
+  if(st.turn)st.turn.t=Math.min(1,st.turn.t+dt/TURN_S*turnRate());
+  st.z=seg.end==='arrive'?Math.min(st.z+dz,seg.len):st.turn?st.z+dz:Math.min(st.z+dz,seg.len+(st.assist?1:0));
   if(st.ped){st.ped.d-=dz;st.ped.x-=4.2*dt}
   if(st.obs)st.obs.d-=dz;
   if(st.turnIn&&!st.turn)st.lat=clamp(st.lat+st.turnIn*dz*1.2,-16,4.5);
@@ -1080,7 +1087,7 @@ function make3d(){
   const START=[{x:0,z:0,hx:0,hz:-1},{x:-18,z:-118,hx:-1,hz:0},{x:-244,z:-124,hx:0,hz:-1}];
   const at=(si,z,lat)=>{const s=START[si],rx=-s.hz,rz=s.hx;return{x:s.x+s.hx*z+rx*lat,z:s.z+s.hz*z+rz*lat,hx:s.hx,hz:s.hz,rx,rz}};
   function pose(){
-    if(st.turn){const t=clamp(st.turn.t,0,1),p=t*t*(3-2*t),d=st.turn.dir,Rr=d<0?18:6,e=at(st.seg,SEGS[st.seg].len,0),a=p*Math.PI/2,c=Math.cos(a),s=Math.sin(a);
+    if(st.turn){const t=clamp(st.turn.t,0,1),p=t*t*(3-2*t),d=st.turn.dir,Rr=d<0?18:6,e=at(st.seg,SEGS[st.seg].len,(st.turn.lat0||0)*(1-p)),a=p*Math.PI/2,c=Math.cos(a),s=Math.sin(a);
       return{x:e.x+e.rx*d*Rr*(1-c)+e.hx*Rr*s,z:e.z+e.rz*d*Rr*(1-c)+e.hz*Rr*s,hx:e.hx*c+e.rx*d*s,hz:e.hz*c+e.rz*d*s}}
     const q=at(st.seg,st.z,st.camX+st.lat),a=st.turnIn*.6,c=Math.cos(a),sn=Math.sin(a);
     return{x:q.x,z:q.z,hx:q.hx*c+q.rx*sn,hz:q.hz*c+q.rz*sn};
