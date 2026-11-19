@@ -132,17 +132,6 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 #phNavLabel{display:block;font-size:2.5cqh;font-weight:700;color:var(--route)}
 #phNavDist{display:block;font-size:5cqh;line-height:1.05}
 .ph-map{flex:1;min-height:0;background:#18201f;border-radius:2.4cqh;overflow:hidden}
-.ph-pick{flex:1;min-height:0;display:flex;flex-direction:column;gap:1.6cqh}
-.ph-pick>b{font-size:4cqh;text-align:center}
-.ph-pick button{flex:1;max-height:12cqh;display:flex;align-items:center;gap:4cqw;padding:0 5cqw;border-radius:2.4cqh;border:.35cqh solid #3a4a45;background:#18201f;color:#fff;
-  font:inherit;font-size:3.6cqh;font-weight:700;text-align:left;cursor:pointer}
-.ph-pick button svg{width:6cqh;height:6cqh;flex:none;color:var(--route)}
-.ph-pick button small{display:block;font-size:2.2cqh;font-weight:400;color:var(--ink-dim)}
-.ph-pick button:active{background:#24302d;border-color:var(--route)}
-.ph-pick button:focus-visible{outline:.4cqh solid var(--route);outline-offset:.3cqh}
-.dest-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:13px;font-weight:700}
-.dest-row span{margin-right:4px}
-.panel .dest-row button{min-height:38px;font-size:14px;padding:4px 12px;flex:1;justify-content:center}
 .ph-map svg{width:100%;height:100%;display:block}
 .ph-sig{display:flex;justify-content:space-between;align-items:center;font-size:2.6cqh;font-weight:700;color:var(--signal)}
 .ph-sig svg{width:7cqh;height:7cqh;display:block}
@@ -346,11 +335,6 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
       <button id="pPower" type="button" aria-pressed="true"><span id="pwrText">Power is on</span><kbd>O</kbd></button>
       <button id="btnRun" type="button"><span id="runText">Start journey</span><kbd>S</kbd></button>
       <button id="btnReset" type="button"><span>Reset demo</span></button>
-    </div>
-    <div class="dest-row" role="group" aria-label="Destination"><span>Destination</span>
-      <button type="button" class="destBtn" data-dest="pharmacy" aria-pressed="false">Pharmacy</button>
-      <button type="button" class="destBtn" data-dest="grocery" aria-pressed="false">Grocery</button>
-      <button type="button" class="destBtn" data-dest="home" aria-pressed="false">Home</button>
     </div></section>
     <section><h2>Emergency scenarios</h2><div class="grid">
       <button id="btnPed" type="button" aria-pressed="false"><span>Pedestrian crossing</span><kbd>P</kbd></button>
@@ -474,12 +458,6 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
     <div class="ph-alert warn" id="phAlert" hidden></div>
     <div class="ph-speed"><span class="ph-limit" id="phLimit">Limit <b>25</b></span><b id="phSpeed">15</b><span class="u">mph</span></div>
     <div class="ph-mode" id="phMode">Manual</div>
-    <div class="ph-pick" id="phPick" hidden>
-      <b>Where to?</b>
-      <button type="button" class="phDest" data-dest="pharmacy"><svg viewBox="0 0 48 48" fill="currentColor"><path d="M19 6h10v13h13v10H29v13H19V29H6V19h13z"/></svg><span>Pharmacy<small>0.1 mi</small></span></button>
-      <button type="button" class="phDest" data-dest="grocery"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"><path d="M4 8h6l5 22h22l5-15H13"/><circle cx="18" cy="38" r="3.5" fill="currentColor"/><circle cx="34" cy="38" r="3.5" fill="currentColor"/></svg><span>Grocery store<small>0.1 mi</small></span></button>
-      <button type="button" class="phDest" data-dest="home"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"><path d="M6 22 24 7l18 15M11 18v23h26V18"/><path d="M20 41V29h8v12"/></svg><span>Home<small>0.1 mi</small></span></button>
-    </div>
     <div class="ph-nav" id="phNav"><span id="phNavIcon"></span><span><span id="phNavLabel">Turn left in</span><b id="phNavDist">100 ft</b></span></div>
     <div class="ph-map" id="phMap"><svg viewBox="-300 -345 360 390" preserveAspectRatio="xMidYMid meet" aria-label="Route map">
       <g stroke="#2e3b38" stroke-width="24" stroke-linecap="round"><path d="M-6 40V-340M50-112H-295M-250 40V-340"/></g>
@@ -536,7 +514,6 @@ async function startPeer(id,role){
   if(!window.RTCPeerConnection)return;
   const pc=new RTCPeerConnection(ICE),dc=pc.createDataChannel('ride'),p={pc,dc,role,open:false,t:Date.now()};peers[id]=p;
   dc.onopen=()=>{p.open=true;try{dc.send(JSON.stringify(snap()))}catch(e){}hostStatus()};
-  dc.onmessage=ev=>{try{const m=JSON.parse(ev.data);if(m.cmd)onCmd(m.cmd)}catch(e){}};
   dc.onclose=()=>{p.open=false;hostStatus()};
   pc.onicecandidate=e=>{if(e.candidate)pub('/sig/'+id,{ice:e.candidate})};
   pc.onconnectionstatechange=()=>{if(/failed|closed/.test(pc.connectionState)){p.open=false;hostStatus()}};
@@ -566,14 +543,13 @@ function remote(code,host){
     mq=mqtt.connect(BROKER,{reconnectPeriod:3000,connectTimeout:10000});
     const hello=()=>pub('/hello',{role:ROLE,id:MYID});
     mq.on('connect',()=>{
-      if(host){mq.subscribe(topicOf('/hello'));mq.subscribe(topicOf('/sig-host'));mq.subscribe(topicOf('/cmd'));hostStatus()}
+      if(host){mq.subscribe(topicOf('/hello'));mq.subscribe(topicOf('/sig-host'));hostStatus()}
       else{mq.subscribe(topicOf('/state'));mq.subscribe(topicOf('/sig/'+MYID));if(DISPLAY)mq.subscribe(topicOf('/sound'));hello();
         if(!p2p)remoteState(DISPLAY?'Linked to code '+code+'. Waiting for the controller.':'Linked to controller '+code+'.')}});
     mq.on('offline',()=>{if(!p2p)remoteState('Link offline. Retrying.')});mq.on('error',()=>{if(!p2p)remoteState('Link error. Retrying.')});
     mq.on('message',(t,pl)=>{let m;try{m=JSON.parse(pl.toString())}catch(e){m=pl.toString()}
       if(host){
         if(t.endsWith('/sig-host'))return hostSignal(m);
-        if(t.endsWith('/cmd'))return onCmd(m);
         const role=typeof m==='string'?m:m.role;seen[role]=Date.now();
         if(m&&m.id){const pr=peers[m.id];if(!pr||(!pr.open&&Date.now()-pr.t>10000))startPeer(m.id,role)}
         hostStatus();return}
@@ -598,7 +574,7 @@ const ICON={
 
 let G=null,W=0,H=0,f=0,y0=0,st,last=0,blinkOn=false,toastTimer=0,walk=0;
 const DEST={pharmacy:{name:'Pharmacy',at:'at the pharmacy'},grocery:{name:'Grocery store',at:'at the grocery store'},home:{name:'Home',at:'home'}};
-const fresh=()=>({dest:null,running:false,started:false,seg:0,z:0,speed:CRUISE,turn:null,left:false,right:false,hazard:false,assist:false,ped:null,arrived:false,power:true,lat:0,turnIn:0,cruise:CRUISE,gas:false,brake:false,blind:{left:0,right:0},obs:null,camX:0,autoHaz:false,steer:0});
+const fresh=()=>({dest:'pharmacy',running:false,started:false,seg:0,z:0,speed:CRUISE,turn:null,left:false,right:false,hazard:false,assist:false,ped:null,arrived:false,power:true,lat:0,turnIn:0,cruise:CRUISE,gas:false,brake:false,blind:{left:0,right:0},obs:null,camX:0,autoHaz:false,steer:0});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rnd=n=>{const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)};
 
@@ -698,7 +674,7 @@ function street(si,camZ,ox,alpha,main){
   obj.sort((a,b)=>b.z-a.z).forEach(o=>{ctx.globalAlpha=alpha*clamp((620-o.z)/120,0,1);
     if(o.t===0)house(o.side,o.z,ox,o.seed);else if(o.t===1)tree(o.side,o.z,ox,o.seed);else if(o.t===2)person(st.ped,ox);else barrier(st.obs,ox)});
   ctx.globalAlpha=1;
-  if(hasX&&zi<260&&zi+30>ZN&&(st.dest||st.started))chevrons(zi,seg.end==='left'?-1:1,ox,alpha*clamp((260-zi)/40,0,1));
+  if(hasX&&zi<260&&zi+30>ZN)chevrons(zi,seg.end==='left'?-1:1,ox,alpha*clamp((260-zi)/40,0,1));
   if(!hasX){const r=seg.len+8-camZ;if(r>8&&r<400){const s=f/r,p=P(24,12,r,ox),q=Math.max(7,2.2*s);
     ctx.fillStyle='rgba('+C.route+','+(.9*alpha)+')';ctx.beginPath();ctx.arc(p[0],p[1]-q*1.6,q,Math.PI*.85,Math.PI*.15);ctx.lineTo(p[0],p[1]);ctx.fill();
     ctx.fillStyle='rgba(13,20,22,'+(.8*alpha)+')';ctx.beginPath();ctx.arc(p[0],p[1]-q*1.6,q*.38,0,7);ctx.fill()}}
@@ -724,7 +700,7 @@ function step(dt){
   const rate=st.speed>target?(st.brake?12:7):(st.gas?5:3.5);
   st.speed+=clamp(target-st.speed,-rate*dt,rate*dt);
   const dz=st.speed*1.4667*PACE*dt;st.z+=dz;walk+=dt;
-  if(st.turnIn&&!st.turn)st.lat=clamp(st.lat+st.turnIn*dz*.6,-13,4);
+  if(st.turnIn&&!st.turn)st.lat=clamp(st.lat+st.turnIn*dz*1.2,-16,4.5);
   ['left','right'].forEach(k=>{if(st.blind[k]>0){st.blind[k]-=dt;if(st.blind[k]<=0){st.blind[k]=0;toast((k==='left'?'Left':'Right')+' side clear.');render()}}});
   if(o)obstacle(o,dt,dz);
   if(st.ped){st.ped.d-=dz;st.ped.x-=4.2*dt;
@@ -758,7 +734,6 @@ function obstacle(o,dt,dz){
 }
 function navState(){
   if(st.arrived)return['pin','You have arrived '+DEST[st.dest||'pharmacy'].at];
-  if(!st.dest&&!st.started)return['pin','Choose a destination'];
   const seg=SEGS[st.seg],dist=seg.len-st.z,n=Math.max(10,Math.ceil(dist/10)*10);
   if(st.turn)return[st.turn.dir<0?'left':'right','Turning '+(st.turn.dir<0?'left':'right')];
   if(seg.end==='arrive')return['pin',DEST[st.dest||'pharmacy'].name+' in '+n+' ft'];
@@ -785,7 +760,6 @@ function render(){
   $('modeCheck').hidden=!st.assist||pend;
   $('alertSub').textContent=st.assist?'Assist is slowing':'Slowing';
   [['left','blindL'],['right','blindR']].forEach(a=>{const on=st.blind[a[0]]>0;$(a[1]).classList.toggle('on',on);$(a[1]+'Tag').hidden=!on});
-  document.querySelectorAll('.destBtn').forEach(b=>b.setAttribute('aria-pressed',b.dataset.dest===st.dest));
   $('runText').textContent=st.arrived?'Journey complete':st.running?'Pause journey':st.started?'Resume journey':'Start journey';
   $('btnRun').disabled=st.arrived;
   $('simState').textContent=!st.power?'Powered off':st.arrived?'Arrived':st.running?'Riding':st.started?'Paused':'Paused at start';
@@ -810,7 +784,6 @@ function toast(msg){                                                // shown to 
 }
 const RT=[{x:0,y:0,hx:0,hy:-1},{x:-18,y:-118,hx:-1,hy:0},{x:-244,y:-124,hx:0,hy:-1}];
 function phoneDraw(){
-  const pick=!st.dest&&!st.started&&st.power;$('phPick').hidden=!pick;$('phNav').hidden=pick;$('phMap').hidden=pick;
   $('phDestLabel').textContent=DEST[st.dest||'pharmacy'].name;
   const n=navState(),k=n[1].indexOf(' in '),o=st.obs,pend=!!o&&o.phase!=='manual',m=$('phMode');
   $('phNavIcon').innerHTML=ICON[n[0]];$('phNavLabel').textContent=k<0?n[1]:n[1].slice(0,k+3);$('phNavDist').textContent=k<0?'':n[1].slice(k+4);
@@ -834,7 +807,7 @@ function predict(dt){
   st.z=seg.end==='arrive'?Math.min(st.z+dz,seg.len):st.turn?st.z+dz:Math.min(st.z+dz,seg.len+1);
   if(st.ped){st.ped.d-=dz;st.ped.x-=4.2*dt}
   if(st.obs)st.obs.d-=dz;
-  if(st.turnIn&&!st.turn)st.lat=clamp(st.lat+st.turnIn*dz*.6,-13,4);
+  if(st.turnIn&&!st.turn)st.lat=clamp(st.lat+st.turnIn*dz*1.2,-16,4.5);
 }
 let lastSeq=0,lastBoot='',minD=1e12,gotState=false;
 function apply(m){
@@ -918,8 +891,7 @@ function emitSnd(a){if(FOLLOW)return;const j=JSON.stringify({snd:a});
   for(const id in peers){const p=peers[id];if(p.open&&p.role==='display')try{p.dc.send(j)}catch(e){}}
   if(mq&&mq.connected&&room)try{mq.publish(topicOf('/sound'),JSON.stringify(a))}catch(e){}}
 function run(){
-  if(!need())return;if(st.arrived)return;
-  if(!st.dest){st.dest='pharmacy';note('No destination was chosen, so the route is set to the pharmacy.')}st.running=!st.running;st.started=true;last=0;
+  if(!need())return;if(st.arrived)return;st.running=!st.running;st.started=true;last=0;
   note(st.running?'Journey running.':'Journey paused.');render()}
 function ped(){
   if(!need())return;
@@ -930,21 +902,6 @@ function ped(){
   st.ped={d:72,x:14,active:true};$('alert').hidden=false;
   if(!st.running){st.running=true;st.started=true;last=0}
   $('live').textContent='Pedestrian ahead. '+(st.assist?'Assist is slowing.':'Slowing.');render();
-}
-function setDest(d,who){
-  if(!DEST[d]||!need())return;
-  if(st.started&&!st.arrived){note('The journey has started. Reset the demo to choose another destination.');return}
-  if(st.arrived)return note('Journey is complete. Reset the demo to ride again.');
-  st.dest=d;logit((who==='rider'?'Rider chose ':'Destination set to ')+DEST[d].name+'.',true);
-  toast('Route set: '+DEST[d].name+'.');render();live();draw();
-}
-const doneCmd=new Set();
-function onCmd(c){if(!c||FOLLOW)return;if(c.id){if(doneCmd.has(c.id))return;doneCmd.add(c.id)}if(c.dest)setDest(c.dest,'rider')}
-function sendCmd(c){       // from the phone back to the controller
-  c.id=MYID+':'+Date.now()+':'+Math.random().toString(36).slice(2,6);const m={cmd:c};
-  try{chan&&chan.postMessage(m)}catch(e){}
-  try{if(fdc&&fdc.readyState==='open')fdc.send(JSON.stringify(m))}catch(e){}
-  pub('/cmd',c);
 }
 function reset(){st=fresh();wheel.style.transform='';$('alert').hidden=true;$('tk').hidden=true;navKey=spKey='';render();live();draw();note('Demo reset.')}
 
@@ -971,7 +928,7 @@ function setSteer(v){
   if(v&&!st.turnIn)logit('Steering '+(v<0?'left':'right')+'.',true);
   st.turnIn=v;
   if(Math.abs(v)>.25&&!takeover()&&st.assist){st.assist=false;toast('Steering detected. Assist is off. You are in control.');render()}
-  wheel.classList.toggle('steering',!!v);wheel.style.transform=v?'rotate('+(v*80)+'deg)':'';
+  wheel.classList.toggle('steering',!!v);wheel.style.transform=v?'rotate('+(v*180)+'deg)':'';
   if(!st.running)draw();send();
 }
 function pedal(k,on){
@@ -1000,7 +957,7 @@ window.addEventListener('blur',()=>{if(st.gas||st.brake){pedal('gas',false);peda
 act.o=bind('btnPower',power);$('pPower').addEventListener('click',power);
 const sl=$('steer');sl.addEventListener('input',()=>setSteer(sl.value/100));
 ['change','pointerup','pointercancel','blur'].forEach(t=>sl.addEventListener(t,()=>{sl.value=0;setSteer(0);if(t!=='blur')sl.blur()}));
-[['z',-.6],['x',.6]].forEach(a=>{
+[['z',-1],['x',1]].forEach(a=>{
   document.addEventListener('keydown',e=>{if(!FOLLOW&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&e.key.toLowerCase()===a[0]&&!/^(INPUT|TEXTAREA)$/.test(e.target.tagName)){sl.value=a[1]*100;setSteer(a[1])}});
   document.addEventListener('keyup',e=>{if(e.key.toLowerCase()===a[0]){sl.value=0;setSteer(0)}})});
 Object.assign(act,{s:run,p:ped,t:obs,q:()=>blind('left'),e:()=>blind('right')});
@@ -1125,7 +1082,7 @@ function make3d(){
   function pose(){
     if(st.turn){const t=clamp(st.turn.t,0,1),p=t*t*(3-2*t),d=st.turn.dir,Rr=d<0?18:6,e=at(st.seg,SEGS[st.seg].len,0),a=p*Math.PI/2,c=Math.cos(a),s=Math.sin(a);
       return{x:e.x+e.rx*d*Rr*(1-c)+e.hx*Rr*s,z:e.z+e.rz*d*Rr*(1-c)+e.hz*Rr*s,hx:e.hx*c+e.rx*d*s,hz:e.hz*c+e.rz*d*s}}
-    const q=at(st.seg,st.z,st.camX+st.lat),a=st.turnIn*.12,c=Math.cos(a),sn=Math.sin(a);
+    const q=at(st.seg,st.z,st.camX+st.lat),a=st.turnIn*.6,c=Math.cos(a),sn=Math.sin(a);
     return{x:q.x,z:q.z,hx:q.hx*c+q.rx*sn,hz:q.hz*c+q.rz*sn};
   }
   const V=new T.Vector3();
@@ -1136,8 +1093,7 @@ function make3d(){
   function overlay(q){
     if(!st.power)return;
     const si=st.seg,seg=SEGS[si];
-    if(!st.dest&&!st.started){}
-    else if(seg.end!=='arrive'){
+    if(seg.end!=='arrive'){
       const d=seg.end==='left'?-1:1,e=at(si,seg.len+12,d*9),p=pr(e.x,8.5,e.z,q);
       let a=st.turn?clamp(1-st.turn.t*2.5,0,1):clamp((260-(seg.len-st.z))/40,0,1);
       if(p&&a>0){const s=Math.max(p[2],3.2),h=6*s,w=3.2*s;a*=clamp(p[3]/40,.5,1);ctx.lineJoin='miter';ctx.lineCap='butt';
@@ -1185,9 +1141,6 @@ if(PHONE){
   $('joinForm').addEventListener('submit',e=>{e.preventDefault();const c=$('joinCode').value.trim().toUpperCase();if(c)location.hash='#phone-'+c});
 }
 if(FOLLOW&&chan)chan.onmessage=e=>incoming(e.data);
-if(!FOLLOW&&chan)chan.onmessage=e=>{if(e.data&&e.data.cmd)onCmd(e.data.cmd)};
-document.querySelectorAll('.destBtn').forEach(b=>b.addEventListener('click',()=>setDest(b.dataset.dest,'wizard')));
-document.querySelectorAll('.phDest').forEach(b=>b.addEventListener('click',()=>{if(PHONE)sendCmd({dest:b.dataset.dest});else setDest(b.dataset.dest,'rider')}));
 if(/[?&]debug/.test(location.search))window.__moped=()=>({st,p2p,peers:Object.keys(peers).length});
 window.addEventListener('hashchange',()=>location.reload());
 new ResizeObserver(()=>{resize();draw()}).observe(stage);

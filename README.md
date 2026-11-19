@@ -35,13 +35,13 @@ The same address serves three screens. Open the plain address first; it is the c
 
 All three devices need internet access. The ride state is relayed through a public message broker (broker.hivemq.com, secure WebSocket on port 8884) under that random code; nothing personal is sent. Sounds (beeps, horn) play on the participant laptop while it is linked, and the controller stays quiet. The controller remembers its code, so reloading it reconnects to the same devices. To use a different broker, add `?broker=wss://host:port/path` to every device's address.
 
-**Destination.** At the start the phone shows "Where to?" with Pharmacy, Grocery store and Home. When the rider taps one, the route is set on every screen and the end of the route is named ("Pharmacy in 180 ft", "You have arrived at the pharmacy"). The wizards can also pick it with the Destination buttons on the controller. If the journey starts with no destination, it is set to the pharmacy.
+The route always ends at the pharmacy ("Pharmacy in 180 ft", "You have arrived at the pharmacy").
 
 Keyboard shortcuts on the controller: left and right arrows for blinkers, hold up arrow for gas and down arrow for brake, H hazard, B horn, A AUTO, G rider took over, S start or pause, P pedestrian, T obstacle, Q and E blind spots.
 
 Power: the button on the steering column below the wheel (or O) switches the moped on and off. When it is off the rider's AR display and phone go dark and every other control is ignored. The moped must be stopped before it can be switched off.
 
-Steering: drag the slider under the wheel (or hold Z or X) to turn the wheel. The rider's view swings and the moped drifts across the lane while it is moving; the slider springs back when released. Turns at junctions still happen automatically. Steering while AUTO is on switches to manual.
+Steering: drag the slider under the wheel (or hold Z or X for full lock) to turn the wheel, up to half a turn each way. The rider's view swings and the moped drifts across the lane while it is moving; the slider springs back when released. Turns at junctions still happen automatically. Steering while AUTO is on switches to manual.
 
 Pedals: holding gas speeds up (to 30 mph; the limit ring turns red above 25) and starts the journey if it has not started. Holding brake slows to a stop. Braking while AUTO is on switches to manual, and braking during a takeover request counts as taking over.
 
