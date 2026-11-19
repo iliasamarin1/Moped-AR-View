@@ -7,7 +7,7 @@ Interactive first-person prototype of an augmented reality riding display for a 
 ## What it does
 
 - Rider's-eye view of a 3D neighborhood street with a see-through AR readout: speed, speed limit, next turn and riding mode.
-- A separate controller for Wizard-of-Oz testing: blinkers, hazard, horn, AUTO (riding assistance), takeover, pedestrian, obstacle and blind-spot scenarios.
+- A separate controller for Wizard-of-Oz testing: blinkers, hazard, horn, self driving (self driving), takeover, pedestrian, obstacle and blind-spot scenarios.
 - A vertical phone display for the screen mounted on the wheel.
 
 Everything is simulated. It is a concept prototype, not vehicle software.
@@ -18,7 +18,7 @@ The same address serves three screens. Open the plain address first; it is the c
 
 | Screen | Address ending | Who looks at it | What it shows |
 | --- | --- | --- | --- |
-| Controller | (nothing) | Wizards | The wheel (click its paddles, hazard, horn, AUTO and grips), gas and brake pedals to hold, scenario buttons, a preview of the rider's view, and a session log. |
+| Controller | (nothing) | Wizards | The wheel (click its paddles, hazard, horn, self driving and grips), gas and brake pedals to hold, scenario buttons, a preview of the rider's view, and a session log. |
 | Participant | `#display` | Rider | The AR view only. |
 | Phone | `#phone` | Rider | A vertical phone display: speed, limit, mode, next turn, route map, blinkers and alerts. |
 
@@ -37,13 +37,13 @@ All three devices need internet access. The ride state is relayed through a publ
 
 The route always ends at the pharmacy ("Pharmacy in 180 ft", "You have arrived at the pharmacy").
 
-Keyboard shortcuts on the controller: left and right arrows for blinkers, hold up arrow for gas and down arrow for brake, H hazard, B horn, A AUTO, G rider took over, S start or pause, P pedestrian, T obstacle, Q and E blind spots.
+Keyboard shortcuts on the controller: left and right arrows for blinkers, hold up arrow for gas and down arrow for brake, H hazard, B horn, A self driving, G rider took over, S start or pause, P pedestrian, T obstacle, Q and E blind spots.
 
 Power: the button on the steering column below the wheel (or O) switches the moped on and off. When it is off the rider's AR display and phone go dark and every other control is ignored. The moped must be stopped before it can be switched off.
 
-Steering: drag the slider under the wheel (or hold Z or X for full lock) to turn the wheel, up to half a turn each way. The rider's view swings and the moped drifts across the lane while it is moving; the slider springs back when released. In manual mode the moped slows to a stop at each junction and waits until the wizard steers toward the turn. A short flick of the slider (or Z/X) toward the turn is enough, on the approach or while waiting; the moped remembers it and takes the corner. Holding the steer makes the turn quicker, and steering the other way cancels it. With AUTO on, it takes the turns by itself. Steering while AUTO is on switches to manual.
+Steering: drag the slider under the wheel (or hold Z or X for full lock) to turn the wheel, up to half a turn each way. The rider's view swings and the moped drifts across the lane while it is moving; the slider springs back when released. In manual mode the moped slows to a stop at each junction and waits until the wizard steers toward the turn. A short flick of the slider (or Z/X) toward the turn is enough, on the approach or while waiting; the moped remembers it and takes the corner. Holding the steer makes the turn quicker, and steering the other way cancels it. With self driving on, it takes the turns by itself. Steering while self driving is on switches to manual.
 
-Pedals: holding gas speeds up (to 30 mph; the limit ring turns red above 25) and starts the journey if it has not started. Holding brake slows to a stop. Braking while AUTO is on switches to manual, and braking during a takeover request counts as taking over.
+Pedals: holding gas speeds up (to 30 mph; the limit ring turns red above 25) and starts the journey if it has not started. Holding brake slows to a stop. Braking while self driving is on switches to manual, and braking during a takeover request counts as taking over.
 
 Messages meant only for the wizards (for example "Not enough straight road here") appear in the panel and the log, never on the rider's screens.
 

@@ -414,11 +414,12 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
         </g>
 
         <!-- riding assistance, right spoke -->
-        <g class="ctl" id="btnAssist" role="button" tabindex="0" aria-pressed="false" aria-label="Auto riding assistance">
+        <g class="ctl" id="btnAssist" role="button" tabindex="0" aria-pressed="false" aria-label="Self driving">
           <rect class="face" x="399" y="279" width="106" height="42" rx="18"/>
           <rect class="ring" x="390" y="270" width="124" height="60" rx="26"/>
           <circle class="led" cx="414" cy="300" r="7"/>
-          <text class="ink" x="464" y="307" font-size="19">AUTO</text>
+          <text class="ink" x="463" y="297" font-size="14">SELF</text>
+          <text class="ink" x="463" y="313" font-size="14">DRIVING</text>
         </g>
 
         <!-- phone mounted in the centre, vertical -->
@@ -442,7 +443,7 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
         <button id="pGas" class="pedal gas" type="button" aria-pressed="false"><span>Gas</span><kbd>&uarr;</kbd></button>
         <button id="wTake" type="button"><span>Rider took over</span><kbd>G</kbd></button>
       </div>
-      <p class="hint">Click the wheel: blinker paddles, hazard, horn, AUTO, grips (rider took over). Drag the slider to turn the wheel; it springs back when you let go. Hold a pedal to slow down or speed up. Keys: &larr; &rarr; blinkers, Z X steer, H hazard, B horn, A AUTO, O power, &uarr; gas, &darr; brake.</p>
+      <p class="hint">Click the wheel: blinker paddles, hazard, horn, self driving, grips (rider took over). Drag the slider to turn the wheel; it springs back when you let go. Hold a pedal to slow down or speed up. Keys: &larr; &rarr; blinkers, Z X steer, H hazard, B horn, A self driving, O power, &uarr; gas, &darr; brake.</p>
     </section>
     <section><h2>Session log</h2><ol class="log" id="log"></ol></section>
   </aside>
@@ -729,9 +730,9 @@ function obstacle(o,dt,dz){
   o.d-=dz;
   if(o.phase==='request'){o.t-=dt;o.beep-=dt;if(o.beep<=0){o.beep=.9;tone(880,.16)}
     const n=Math.max(1,Math.ceil(o.t));
-    if(n!==o.n){o.n=n;$('tkSub').textContent='Obstacle ahead. Hold the grips or press AUTO. Assist ends in '+n+' s.'}
+    if(n!==o.n){o.n=n;$('tkSub').textContent='Obstacle ahead. Hold the grips or press Self driving. Self driving ends in '+n+' s.'}
     if(o.t<=0||o.d<30){o.phase='stopped';st.hazard=true;st.autoHaz=true;st.left=st.right=false;tone(330,.5);
-      $('tkTitle').textContent='Stopping safely';$('tkSub').textContent='No takeover detected. Hold the grips or press AUTO to continue.';
+      $('tkTitle').textContent='Stopping safely';$('tkSub').textContent='No takeover detected. Hold the grips or press Self driving to continue.';
       $('live').textContent='No takeover detected. Stopping safely with hazard lights on.';render()}
   }else if(o.phase==='manual'){
     const sm=t=>t*t*(3-2*t),a=clamp((45-o.d)/22,0,1),b=clamp((-8-o.d)/22,0,1),tgt=-9*sm(a)*(1-sm(b));
@@ -766,9 +767,9 @@ function render(){
   const pend=!!st.obs&&st.obs.phase!=='manual';
   stage.classList.toggle('takeover',pend);$('btnAssist').classList.toggle('call',pend);$('grips').classList.toggle('call',pend);
   $('mode').classList.toggle('active',st.assist&&!pend);$('mode').classList.toggle('alarm',pend);
-  $('modeText').textContent=pend?'Take over':st.assist?'Assist active':'Manual';
+  $('modeText').textContent=pend?'Take over':st.assist?'Self driving':'Manual';
   $('modeCheck').hidden=!st.assist||pend;
-  $('alertSub').textContent=st.assist?'Assist is slowing':'Slowing';
+  $('alertSub').textContent=st.assist?'Self driving is slowing':'Slowing';
   [['left','blindL'],['right','blindR']].forEach(a=>{const on=st.blind[a[0]]>0;$(a[1]).classList.toggle('on',on);$(a[1]+'Tag').hidden=!on});
   $('runText').textContent=st.arrived?'Journey complete':st.running?'Pause journey':st.started?'Resume journey':'Start journey';
   $('btnRun').disabled=st.arrived;
@@ -777,7 +778,7 @@ function render(){
   [['pBrake',st.brake],['pGas',st.gas],['btnPed',!!st.ped],['btnObs',!!st.obs],['btnBL',st.blind.left>0],['btnBR',st.blind.right>0]].forEach(a=>$(a[0]).setAttribute('aria-pressed',!!a[1]));
   stage.classList.toggle('off',!st.power);wheel.classList.toggle('off',!st.power);wheel.classList.toggle('auto',st.assist&&!pend&&st.power);$('offTag').hidden=st.power;
   $('btnPower').classList.toggle('on',st.power);$('btnPower').setAttribute('aria-pressed',st.power);$('pPower').setAttribute('aria-pressed',st.power);$('pwrText').textContent=st.power?'Power is on':'Power is off';
-  $('dispMode').textContent=pend?'TAKE OVER':st.assist?'Assist active':'Manual';$('wTake').classList.toggle('call',pend);
+  $('dispMode').textContent=pend?'TAKE OVER':st.assist?'Self driving':'Manual';$('wTake').classList.toggle('call',pend);
   send();
 }
 const T0=performance.now();
@@ -798,7 +799,7 @@ function phoneDraw(){
   const n=navState(),k=n[1].indexOf(' in '),o=st.obs,pend=!!o&&o.phase!=='manual',m=$('phMode');
   $('phNavIcon').innerHTML=ICON[n[0]];$('phNavLabel').textContent=k<0?n[1]:n[1].slice(0,k+3);$('phNavDist').textContent=k<0?'':n[1].slice(k+4);
   $('phSpeed').textContent=Math.round(st.speed);$('phLimit').classList.toggle('over',Math.round(st.speed)>25);
-  m.textContent=pend?'Take over':st.assist?'Assist active':'Manual';m.classList.toggle('on',st.assist&&!pend);m.classList.toggle('alarm',pend);
+  m.textContent=pend?'Take over':st.assist?'Self driving':'Manual';m.classList.toggle('on',st.assist&&!pend);m.classList.toggle('alarm',pend);
   $('phone').classList.toggle('take',pend);$('phone').classList.toggle('off',!st.power);$('phone').classList.toggle('auto',st.assist&&!pend&&st.power);
   let a='',c='warn';
   if(o&&o.phase==='request'){a='Take over now';c='danger'}else if(o&&o.phase==='stopped'){a='Stopping safely';c='danger'}
@@ -848,9 +849,9 @@ function hazard(){
 function assist(){
   if(!need())return;
   if(takeover())return;
-  if(st.obs){toast('Assist is unavailable until the obstacle is passed.');return}
+  if(st.obs){toast('Self driving is unavailable until the obstacle is passed.');return}
   st.assist=!st.assist;if(st.assist)st.cruise=CRUISE;
-  toast(st.assist?'Assist active. Stay attentive. Steer or brake to take over.':'Manual riding. You are in full control.');render()}
+  toast(st.assist?'Self driving on. Stay attentive. Steer or brake to take over.':'Manual riding. You are in full control.');render()}
 let ac;
 function tone(fr,dur){if(!remoteDisplay())playTone(fr,dur);emitSnd(['tone',fr,dur])}
 function playTone(fr,dur){
@@ -861,8 +862,8 @@ function playTone(fr,dur){
 function takeover(){
   const o=st.obs;if(!o||o.phase==='manual')return false;
   o.phase='manual';st.assist=false;if(st.autoHaz){st.hazard=false;st.autoHaz=false}
-  $('tk').classList.add('soft');$('tkTitle').textContent='You have control';$('tkSub').textContent='Assist is off. Steer around the obstacle.';
-  tone(520,.12);toast('You have control. Assist is off.');render();return true;
+  $('tk').classList.add('soft');$('tkTitle').textContent='You have control';$('tkSub').textContent='Self driving is off. Steer around the obstacle.';
+  tone(520,.12);toast('You have control. Self driving is off.');render();return true;
 }
 function blind(side){
   if(!need())return;
@@ -912,7 +913,7 @@ function ped(){
   if(st.turn||seg.len-st.z<82){note('Too close to the next turn. Try the pedestrian scenario on the next straight.');return}
   st.ped={d:72,x:14,active:true};$('alert').hidden=false;
   if(!st.running){st.running=true;st.started=true;last=0}
-  $('live').textContent='Pedestrian ahead. '+(st.assist?'Assist is slowing.':'Slowing.');render();
+  $('live').textContent='Pedestrian ahead. '+(st.assist?'Self driving is slowing.':'Slowing.');render();
 }
 function reset(){st=fresh();wheel.style.transform='';$('alert').hidden=true;$('tk').hidden=true;navKey=spKey='';render();live();draw();note('Demo reset.')}
 
@@ -938,7 +939,7 @@ function setSteer(v){
   if(v===st.turnIn)return;
   if(v&&!st.turnIn)logit('Steering '+(v<0?'left':'right')+'.',true);
   st.turnIn=v;
-  if(Math.abs(v)>.25&&!takeover()&&st.assist){st.assist=false;toast('Steering detected. Assist is off. You are in control.');render()}
+  if(Math.abs(v)>.25&&!takeover()&&st.assist){st.assist=false;toast('Steering detected. Self driving is off. You are in control.');render()}
   wheel.classList.toggle('steering',!!v);wheel.style.transform=v?'rotate('+(v*180)+'deg)':'';
   if(!st.running)draw();send();
 }
@@ -950,8 +951,8 @@ function pedal(k,on){
     logit((k==='gas'?'Gas':'Brake')+' pressed.',true);
     if(k==='brake'&&takeover()){}
     else if(st.assist){
-      if(k==='brake'){st.assist=false;st.cruise=Math.min(st.cruise,st.speed);toast('Brake pressed. Assist is off. You are in control.')}
-      else note('Gas does nothing while AUTO is on.');
+      if(k==='brake'){st.assist=false;st.cruise=Math.min(st.cruise,st.speed);toast('Brake pressed. Self driving is off. You are in control.')}
+      else note('Gas does nothing while self driving is on.');
     }
     if(k==='gas'&&!st.running){st.running=true;st.started=true;last=0}
   }
