@@ -13,7 +13,7 @@
 :root{
   --bar:#e9ebe6; --bar-ink:#1e2422; --bar-line:#b9bdb5; --bar-btn:#fbfbf9;
   --plate:rgba(13,20,22,.72); --ink:#ffffff; --ink-dim:rgba(255,255,255,.72);
-  --route:#ffc65a; --warn:#ff7a66; --blind:#ff8c1a; --signal:#57e389; --signal-dim:rgba(87,227,137,.28);
+  --route:#ffc65a; --warn:#ff7a66; --blind:#ff8c1a; --signal:#57e389; --signal-dim:rgba(87,227,137,.28); --auto:#4aa8ff; --auto-ink:#1769c2;
   --alert:#ffc64a; --alert-ink:#231a00; --hazard:#e23a30;
   --rim:#6c706d; --grip:#3b3f3d; --spoke:#7d817d; --pad:#dfe0d9; --pad-ink:#1f2422;
   --screen:#0e1413; --cowl:#2b2f2d;
@@ -84,16 +84,16 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 #btnPower.on .face{fill:#fff;stroke:#12a05a}
 #btnPower.on .pw{stroke:#12a05a}
 #wheel.off #miniScreen{opacity:.12}
-#wheel.auto #miniBg{stroke:var(--signal);stroke-width:6;fill:#0b2219}
+#wheel.auto #miniBg{stroke:var(--auto);stroke-width:6;fill:#0a1a2e}
 .stage.off .hud,.stage.off .blind,.stage.off .blind-tag{display:none}
 .offtag{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:var(--plate);color:#fff;font-size:14px}
 .display .offtag{display:none}
 .phone{position:relative}
 .phone::after{content:"";position:absolute;inset:0;border-radius:28px;pointer-events:none;opacity:0;transition:opacity .4s;
-  box-shadow:inset 0 0 0 1.3cqh var(--signal),inset 0 0 3cqh 1.3cqh rgba(87,227,137,.75),inset 0 0 13cqh 2cqh rgba(87,227,137,.4)}
+  box-shadow:inset 0 0 0 1.3cqh var(--auto),inset 0 0 3cqh 1.3cqh rgba(74,168,255,.75),inset 0 0 13cqh 2cqh rgba(74,168,255,.4)}
 .phone.auto::after{opacity:1}
-.phone.auto{background:#0b2219;box-shadow:0 0 30px 8px rgba(87,227,137,.6);transition:background .4s}
-.phone.auto .ph-nav,.phone.auto .ph-map{background:#123528}
+.phone.auto{background:#0a1a2e;box-shadow:0 0 30px 8px rgba(74,168,255,.6);transition:background .4s}
+.phone.auto .ph-nav,.phone.auto .ph-map{background:#12294a}
 @media (max-width:520px){.phone::after{border-radius:0}}
 @media (prefers-reduced-motion:reduce){.phone::after{transition:none}}
 .phone.off{background:#000}
@@ -124,7 +124,7 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 .ph-limit{display:flex;align-items:center;gap:2cqw;font-size:2.4cqh;color:var(--ink-dim);margin-bottom:.6cqh}
 .ph-limit b{display:grid;place-items:center;width:5.4cqh;height:5.4cqh;border-radius:50%;border:.5cqh solid var(--warn);color:#fff;font-size:2.6cqh}
 .ph-mode{align-self:center;font-size:3cqh;font-weight:700;padding:.5cqh 5cqw;border:.35cqh solid rgba(255,255,255,.55);border-radius:99cqh}
-.ph-mode.on{border-color:var(--signal)}
+.ph-mode.on{border-color:var(--auto);color:#fff;background:rgba(74,168,255,.18)}
 .ph-mode.alarm{background:#fff;color:#7d1611;border-color:#fff}
 .ph-nav{display:flex;align-items:center;gap:4cqw;background:#18201f;border-radius:2.4cqh;padding:1.5cqh 5cqw}
 #phNavIcon{width:8cqh;height:8cqh;color:var(--route);flex:none}
@@ -200,8 +200,8 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 .mode{display:flex;align-items:center;gap:.45em;margin-top:1.15em;padding:.1em .8em;font-weight:700;
   border:1.5px solid rgba(255,255,255,.55);border-radius:999px;background:rgba(8,14,18,.35)}
 .mode-label{font-size:.7em;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim)}
-.mode svg{width:1em;height:1em;flex:none;color:var(--signal)}
-.mode.active{border-color:var(--signal)}
+.mode svg{width:1em;height:1em;flex:none;color:var(--auto)}
+.mode.active{border-color:var(--auto);background:rgba(14,46,84,.55)}
 .mode.alarm{background:var(--hazard);border-color:#fff}
 .mode.alarm .mode-label{color:#fff}
 .tk{display:flex;align-items:center;gap:12px;padding:10px 18px 10px 14px;max-width:min(100%,560px);
@@ -245,8 +245,8 @@ body{background:var(--bar);color:var(--bar-ink);font-family:var(--font);overflow
 #btnHazard.on .tri{stroke:#fff}
 #btnHazard.on .ink{fill:#fff}
 #btnAssist .led{fill:#8b8f89}
-#btnAssist.on .face{fill:#fff;stroke:#12a05a}
-#btnAssist.on .led{fill:#12a05a}
+#btnAssist.on .face{fill:#fff;stroke:var(--auto)}
+#btnAssist.on .led{fill:var(--auto-ink)}
 .blink #btnAssist.call .face{fill:var(--hazard);stroke:#fff}
 .blink #btnAssist.call .ink{fill:#fff}
 .paddle{filter:drop-shadow(0 4px 4px rgba(0,0,0,.5))}
